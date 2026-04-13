@@ -98,6 +98,7 @@
                     <button @click="syncToCloud()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-semibold transition-all flex items-center gap-2" :class="isSyncing ? 'animate-pulse' : ''">
                         ☁️ Sincronizar Nube
                     </button>
+                    <!-- Tabs Navigation in Desktop Navbar -->
                     <button @click="exportOdooPOs()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-primary hover:from-blue-500 rounded-lg text-sm font-semibold transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)]">
                         🚀 Exportar Odoo POs
                     </button>
@@ -108,7 +109,7 @@
     </nav>
 
     <!-- Main Content -->
-    <main class="p-6 max-w-7xl mx-auto space-y-6">
+    <main class="p-6 max-w-[1400px] mx-auto space-y-6">
         
         <div x-show="!user" class="glass p-8 rounded-2xl border border-accent/50 text-center">
             <h2 class="text-2xl font-bold mb-2">🔒 Acceso Restringido</h2>
@@ -117,63 +118,76 @@
 
         <template x-if="user">
             <div>
-                <!-- MUlti-file uploader -->
-                <div class="glass p-6 rounded-2xl border border-blue-500/30 flex flex-col justify-center text-center transition-all mb-6 relative overflow-hidden"
-                     @dragover.prevent="dragOver = true" 
-                     @dragleave.prevent="dragOver = false" 
-                     @drop.prevent="handleDrop($event)"
-                     :class="dragOver ? 'border-primary bg-primary/10' : ''">
-                    
-                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
-                    
-                    <h2 class="text-xl font-bold mb-2 relative z-10 flex items-center justify-center gap-2">
-                        <span>Lanza tus Facturas Aquí</span> 📄📦
-                    </h2>
-                    <p class="text-sm text-slate-400 mb-4 relative z-10">
-                        Arrastra el maestro en <b>.CSV</b> o directamente TODOS tus <b>archivos .XML (Facturas SAT)</b>. <br>El Dashboard los absorberá automáticamente.
-                    </p>
-                    <label class="cursor-pointer px-4 py-2 bg-primary hover:bg-blue-500 rounded-lg font-semibold transition-colors mx-auto inline-block text-sm relative z-10">
-                        <span>📥 Seleccionar Archivos (CSV o XML)</span>
-                        <input type="file" multiple accept=".csv, .xml" class="hidden" @change="handleFileSelect">
-                    </label>
+                <!-- TABS UI -->
+                <div class="flex gap-2 mb-6 bg-slate-800/50 p-1 rounded-xl w-fit">
+                    <button @click="currentTab = 'procesamiento'" class="px-6 py-2 rounded-lg text-sm font-bold transition-all" :class="currentTab === 'procesamiento' ? 'bg-primary text-white shadow-lg' : 'text-slate-400 hover:text-white'">
+                        📥 Procesamiento Vía XML / CSV
+                    </button>
+                    <button @click="currentTab = 'dashboard'; setTimeout(()=>initCharts(), 100)" class="px-6 py-2 rounded-lg text-sm font-bold transition-all" :class="currentTab === 'dashboard' ? 'bg-accent text-white shadow-lg' : 'text-slate-400 hover:text-white'">
+                        📈 Dashboard Analítico
+                    </button>
                 </div>
 
-                <div x-show="items.length > 0">
-                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-                        <div class="glass p-5 rounded-xl border border-slate-700/50">
-                            <p class="text-sm text-slate-400 font-semibold mb-1">Gasto Histórico Nube</p>
-                            <p class="text-3xl font-bold text-white" x-text="'$' + totalSpent.toLocaleString('en-US', {minimumFractionDigits: 2})"></p>
+                <!-- TABS CONTAINER -->
+                <div class="relative">
+                    
+                    <!-- TAB 1: PROCESAMIENTO -->
+                    <div x-show="currentTab === 'procesamiento'" x-transition class="space-y-6">
+                        <!-- MUlti-file uploader -->
+                        <div class="glass p-6 rounded-2xl border border-blue-500/30 flex flex-col justify-center text-center transition-all relative overflow-hidden"
+                             @dragover.prevent="dragOver = true" 
+                             @dragleave.prevent="dragOver = false" 
+                             @drop.prevent="handleDrop($event)"
+                             :class="dragOver ? 'border-primary bg-primary/10' : ''">
+                            
+                            <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
+                            
+                            <h2 class="text-xl font-bold mb-2 relative z-10 flex items-center justify-center gap-2">
+                                <span>Lanza tus Facturas Aquí</span> 📄📦
+                            </h2>
+                            <p class="text-sm text-slate-400 mb-4 relative z-10">
+                                Arrastra directamente TODOS tus <b>archivos .XML (Facturas SAT)</b>. <br>El motor extraerá SKUs, Fechas y Productos.
+                            </p>
+                            <label class="cursor-pointer px-4 py-2 bg-primary hover:bg-blue-500 rounded-lg font-semibold transition-colors mx-auto inline-block text-sm relative z-10">
+                                <span>📥 Seleccionar Archivos (XML o CSV)</span>
+                                <input type="file" multiple accept=".csv, .xml" class="hidden" @change="handleFileSelect">
+                            </label>
                         </div>
-                        <div class="glass p-5 rounded-xl border border-slate-700/50">
-                            <p class="text-sm text-slate-400 font-semibold mb-1">Artículos Únicos</p>
-                            <p class="text-3xl font-bold text-blue-400" x-text="items.length"></p>
-                        </div>
-                        <div class="glass p-5 rounded-xl border border-slate-700/50">
-                            <p class="text-sm text-slate-400 font-semibold mb-1">Facturas Procesadas</p>
-                            <p class="text-3xl font-bold text-accent" x-text="uniqueInvoices.length"></p>
-                        </div>
-                        <div class="glass p-5 rounded-xl border border-slate-700/50">
-                            <p class="text-sm text-slate-400 font-semibold mb-1">Top Proveedor</p>
-                            <p class="text-xl font-bold text-green-400 truncate" x-text="topSupplier"></p>
-                        </div>
-                    </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="glass p-5 rounded-xl border border-slate-700/50">
+                                <p class="text-sm text-slate-400 font-semibold mb-1">Gasto Histórico (Nube)</p>
+                                <p class="text-3xl font-bold text-white" x-text="'$' + totalSpent.toLocaleString('en-US', {minimumFractionDigits: 2})"></p>
+                            </div>
+                            <div class="glass p-5 rounded-xl border border-slate-700/50">
+                                <p class="text-sm text-slate-400 font-semibold mb-1">Artículos Nube</p>
+                                <p class="text-3xl font-bold text-blue-400" x-text="items.length"></p>
+                            </div>
+                            <div class="glass p-5 rounded-xl border border-slate-700/50">
+                                <p class="text-sm text-slate-400 font-semibold mb-1">Facturas Consolidables</p>
+                                <p class="text-3xl font-bold text-accent" x-text="uniqueInvoices.length"></p>
+                            </div>
+                            <div class="glass p-5 rounded-xl border border-slate-700/50 relative overflow-hidden">
+                                <p class="text-sm text-slate-400 font-semibold mb-1 z-10 relative">Fechas en Proceso (Evita Dobles)</p>
+                                <p class="text-base font-medium text-green-400 truncate z-10 relative" x-text="sessionDates"></p>
+                            </div>
+                        </div>
+
                         <!-- Data Table -->
-                        <div class="lg:col-span-2 glass rounded-xl border border-slate-700/50 flex flex-col h-[600px]">
-                            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 rounded-t-xl">
-                                <h3 class="font-semibold text-lg">🛍️ Líneas de Compra (Sincronizado)</h3>
-                                <input type="text" x-model="searchQuery" placeholder="Buscar producto..." class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-primary">
+                        <div class="glass rounded-xl border border-slate-700/50 flex flex-col h-[650px]">
+                            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 rounded-t-xl gap-4">
+                                <h3 class="font-semibold text-lg whitespace-nowrap">🛍️ Espacio de Trabajo (Borrador Activo)</h3>
+                                <input type="text" x-model="searchQuery" placeholder="🔍 Buscar por SKU, Producto o Categoría..." class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-primary w-full max-w-md">
                             </div>
                             <div class="overflow-y-auto custom-scrollbar flex-1">
                                 <table class="w-full text-left text-sm whitespace-nowrap">
                                     <thead class="sticky top-0 bg-slate-800/90 backdrop-blur text-slate-300 z-10 shadow-md">
                                         <tr>
                                             <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50" @click="sortBy('SKU')">
-                                                SKU (Código) <span x-show="sortCol === 'SKU'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
+                                                SKU/NumParte <span x-show="sortCol === 'SKU'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
                                             </th>
                                             <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50" @click="sortBy('Producto')">
-                                                Producto <span x-show="sortCol === 'Producto'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
+                                                Descripción <span x-show="sortCol === 'Producto'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
                                             </th>
                                             <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50" @click="sortBy('Categoria')">
                                                 Categoría Odoo <span x-show="sortCol === 'Categoria'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
@@ -181,45 +195,103 @@
                                             <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50 text-right" @click="sortBy('Cantidad')">
                                                 Cant <span x-show="sortCol === 'Cantidad'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
                                             </th>
-                                            <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50 text-right" title="Monto Pagado a Proveedor" @click="sortBy('Subtotal_Total')">
+                                            <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50 text-right" @click="sortBy('Costo_Unitario')">
+                                                Costo Unit <span x-show="sortCol === 'Costo_Unitario'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
+                                            </th>
+                                            <th class="px-4 py-3 font-medium resizable-th cursor-pointer hover:bg-slate-700/50 text-right" @click="sortBy('Subtotal_Total')">
                                                 Subtotal ($) <span x-show="sortCol === 'Subtotal_Total'" x-text="sortAsc ? ' 🔼' : ' 🔽'"></span>
                                             </th>
-                                            <th class="px-4 py-3 font-medium text-center">Modificado</th>
+                                            <th class="px-4 py-3 font-medium text-center">Proveedor</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-slate-700/50">
+                                    <tbody class="divide-y divide-slate-700/50 text-xs">
                                         <template x-for="(item, index) in filteredItems" :key="item.FB_ID || index">
-                                            <tr class="hover:bg-slate-700/30 transition-colors">
-                                                <td class="px-4 py-2 font-mono text-xs text-accent" x-text="item.SKU || '-'"></td>
-                                                <td class="px-4 py-2 truncate max-w-[200px]" :title="item.Producto" x-text="item.Producto"></td>
+                                            <tr class="hover:bg-slate-700/30 transition-colors" :class="sessionAddedUUIDs.includes(item.UUID_Factura) ? 'bg-blue-900/10' : ''">
+                                                <td class="px-4 py-2 font-mono text-accent font-bold" x-text="item.SKU || '-'"></td>
+                                                <td class="px-4 py-2 truncate max-w-[200px]" :title="item.Producto" x-text="item.Producto" ></td>
                                                 <td class="px-4 py-2">
-                                                    <select x-model="item.Categoria" @change="updateCharts(); markDirty(item)" class="bg-slate-900 border border-slate-600 rounded text-xs px-2 py-1 focus:outline-none focus:border-primary w-32">
-                                                        <option value="Sin Asignar">Sin Asignar</option>
-                                                        <option value="Electricidad">Electricidad</option>
-                                                        <option value="Plomería">Plomería</option>
-                                                        <option value="Herramienta Manual">Herr. Manual</option>
-                                                        <option value="Herramienta Eléctrica">Herr. Eléctrica</option>
-                                                        <option value="Tornillería y Fijación">Tornillería</option>
-                                                        <option value="Cerrajería">Cerrajería</option>
-                                                        <option value="Iluminación">Iluminación</option>
-                                                        <option value="Materiales Construcción">Construcción</option>
+                                                    <select x-model="item.Categoria" @change="markDirty(item)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 focus:outline-none focus:border-primary w-32 font-semibold" :class="item.Categoria !== 'Sin Asignar' ? 'text-green-400' : 'text-red-400'">
+                                                        <option value="Sin Asignar">❌ Sin Asignar</option>
+                                                        <option value="Electricidad">⚡ Electricidad</option>
+                                                        <option value="Plomería">🚰 Plomería</option>
+                                                        <option value="Herramienta Manual">🔨 Herr. Manual</option>
+                                                        <option value="Herramienta Eléctrica">🔌 Herr. Eléctrica</option>
+                                                        <option value="Tornillería y Fijación">🔩 Tornillería</option>
+                                                        <option value="Cerrajería">🔑 Cerrajería</option>
+                                                        <option value="Iluminación">💡 Iluminación</option>
+                                                        <option value="Materiales Construcción">🧱 Construcción</option>
+                                                        <option value="Seguridad">🛡️ Seguridad</option>
                                                     </select>
                                                 </td>
                                                 <td class="px-4 py-2 text-right" x-text="item.Cantidad"></td>
-                                                <td class="px-4 py-2 text-right font-medium text-blue-300" x-text="(parseFloat(item.Subtotal_Total) || 0).toFixed(2)"></td>
-                                                <td class="px-4 py-2 text-center text-xs text-slate-500" x-text="item.ModifiedBy || 'Auto'"></td>
+                                                <td class="px-4 py-2 text-right font-mono" x-text="'$'+(parseFloat(item.Costo_Unitario) || 0).toFixed(2)"></td>
+                                                <td class="px-4 py-2 text-right font-mono text-blue-300 font-bold" x-text="'$'+(parseFloat(item.Subtotal_Total) || 0).toFixed(2)"></td>
+                                                <td class="px-4 py-2 text-center text-slate-500 truncate max-w-[120px]" x-text="item.Proveedor" :title="item.Proveedor"></td>
                                             </tr>
                                         </template>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Charts -->
-                        <div class="glass rounded-xl border border-slate-700/50 p-4 h-[600px] flex flex-col">
-                            <h3 class="font-semibold text-lg mb-4">📊 Gasto por Categoría</h3>
-                            <div class="flex-1 relative">
-                                <canvas id="categoryChart"></canvas>
+                    <!-- TAB 2: DASHBOARD ANALITICO (TABLA DINÁMICA MÁGICA) -->
+                    <div x-show="currentTab === 'dashboard'" x-transition style="display: none;" class="space-y-6">
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div class="glass p-5 rounded-xl border border-slate-700/50 shadow-lg">
+                                <h3 class="font-bold text-center mb-4 text-slate-300">Gasto por Categoría</h3>
+                                <div class="relative h-64"><canvas id="catChart"></canvas></div>
+                            </div>
+                            <div class="glass p-5 rounded-xl border border-slate-700/50 shadow-lg">
+                                <h3 class="font-bold text-center mb-4 text-slate-300">Gasto por Mes</h3>
+                                <div class="relative h-64"><canvas id="monthChart"></canvas></div>
+                            </div>
+                            <div class="glass p-5 rounded-xl border border-slate-700/50 shadow-lg">
+                                <h3 class="font-bold text-center mb-4 text-slate-300">Gasto por Proveedor (Top)</h3>
+                                <div class="relative h-64"><canvas id="provChart"></canvas></div>
+                            </div>
+                        </div>
+
+                        <!-- TABLA DINÁMICA DRILL DOWN -->
+                        <div class="glass rounded-xl border border-accent flex flex-col h-[500px]">
+                            <div class="p-4 border-b border-accent/50 flex justify-between items-center bg-slate-800/80 rounded-t-xl gap-4">
+                                <div>
+                                    <h3 class="font-bold text-lg text-white">📊 Tabla Dinámica: <span x-text="dashFilter ? (dashFilter.type + ' = ' + dashFilter.value) : 'Consolidado General (Haz click en las gráficas para filtrar)'"></span></h3>
+                                    <p class="text-xs text-slate-400 mt-1">Total de esta vista: <b class="text-green-400" x-text="'$' + flexTableSum.toLocaleString('en-US', {minimumFractionDigits: 2})"></b></p>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button x-show="dashFilter" @click="dashFilter = null" class="px-3 py-1 bg-slate-700 hover:bg-slate-600 rounded text-xs">Limpiar Filtro</button>
+                                    <button @click="downloadFlexTable()" class="px-4 py-2 bg-accent hover:bg-yellow-500 text-slate-900 font-bold rounded shadow shadow-accent/50 text-sm">
+                                        📥 Descargar esta Vista a CSV
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="overflow-y-auto custom-scrollbar flex-1 p-2">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="sticky top-0 bg-slate-800/90 backdrop-blur text-accent z-10 font-bold">
+                                        <tr>
+                                            <th class="px-4 py-2">Fecha</th>
+                                            <th class="px-4 py-2">SKU</th>
+                                            <th class="px-4 py-2">Producto</th>
+                                            <th class="px-4 py-2">Categoría</th>
+                                            <th class="px-4 py-2">Proveedor</th>
+                                            <th class="px-4 py-2 text-right">Subtotal</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-700/50 text-xs text-slate-300">
+                                        <template x-for="(item, index) in flexTableItems" :key="index">
+                                            <tr class="hover:bg-slate-700/30">
+                                                <td class="px-4 py-2" x-text="item.Fecha"></td>
+                                                <td class="px-4 py-2 font-mono text-slate-400" x-text="item.SKU"></td>
+                                                <td class="px-4 py-2 truncate max-w-[200px]" x-text="item.Producto"></td>
+                                                <td class="px-4 py-2 text-green-300" x-text="item.Categoria"></td>
+                                                <td class="px-4 py-2 truncate max-w-[150px]" x-text="item.Proveedor"></td>
+                                                <td class="px-4 py-2 text-right font-bold text-white" x-text="'$'+(parseFloat(item.Subtotal_Total) || 0).toFixed(2)"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
                             </div>
                         </div>
                     </div>
@@ -231,17 +303,18 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('procurementApp', () => ({
-                user: null, items: [], searchQuery: '', chartInstance: null,
-                dragOver: false, isSyncing: false, dirtyItems: new Set(),
+                user: null, items: [], sessionAddedUUIDs: [], searchQuery: '', 
+                currentTab: 'procesamiento', dragOver: false, isSyncing: false, dirtyItems: new Set(),
                 sortCol: 'Fecha', sortAsc: false,
+                dashFilter: null, charts: {},
 
                 get totalSpent() { return this.items.reduce((sum, item) => sum + (parseFloat(item.Subtotal_Total) || 0), 0); },
                 get uniqueInvoices() { return [...new Set(this.items.map(i => i.UUID_Factura).filter(Boolean))]; },
-                get topSupplier() {
-                    if (this.items.length === 0) return '-';
-                    const counts = {};
-                    this.items.forEach(i => { counts[i.Proveedor] = (counts[i.Proveedor] || 0) + parseFloat(i.Subtotal_Total); });
-                    return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                get sessionDates() { 
+                    const sessionItems = this.items.filter(i => this.sessionAddedUUIDs.includes(i.UUID_Factura));
+                    const dates = [...new Set(sessionItems.map(i => i.Fecha))].filter(Boolean);
+                    if(dates.length === 0) return 'Todo Procesado ✔️';
+                    return dates.join(' | ');
                 },
                 get filteredItems() {
                     let result = this.items;
@@ -255,10 +328,11 @@
                     }
                     if (this.sortCol) {
                         result = [...result].sort((a, b) => {
-                            let valA = a[this.sortCol] || '';
-                            let valB = b[this.sortCol] || '';
-                            if (typeof valA === 'string') valA = valA.toLowerCase();
-                            if (typeof valB === 'string') valB = valB.toLowerCase();
+                            let valA = a[this.sortCol] || ''; let valB = b[this.sortCol] || '';
+                            if (typeof valA === 'string') valA = valA.toLowerCase(); if (typeof valB === 'string') valB = valB.toLowerCase();
+                            if(this.sortCol === 'Cantidad' || this.sortCol === 'Costo_Unitario' || this.sortCol === 'Subtotal_Total') {
+                                valA = parseFloat(valA)||0; valB = parseFloat(valB)||0;
+                            }
                             if (valA < valB) return this.sortAsc ? -1 : 1;
                             if (valA > valB) return this.sortAsc ? 1 : -1;
                             return 0;
@@ -267,8 +341,26 @@
                     return result;
                 },
 
+                // DASHBOARD TABLES LOGIC
+                get flexTableItems() {
+                    let filtered = this.items;
+                    if(this.dashFilter !== null) {
+                        filtered = this.items.filter(i => {
+                            if(this.dashFilter.type === 'Categoría') return i.Categoria === this.dashFilter.value;
+                            if(this.dashFilter.type === 'Proveedor') return i.Proveedor === this.dashFilter.value;
+                            if(this.dashFilter.type === 'Mes') return (i.Fecha || '').substring(0,7) === this.dashFilter.value;
+                            return false;
+                        });
+                    }
+                    // sort by subtotal desc
+                    return filtered.sort((a,b) => parseFloat(b.Subtotal_Total) - parseFloat(a.Subtotal_Total));
+                },
+                get flexTableSum() {
+                    return this.flexTableItems.reduce((s,i) => s + (parseFloat(i.Subtotal_Total)||0), 0);
+                },
+
                 sortBy(col) {
-                    if(this.sortCol === col) { this.sortAsc = !this.sortAsc; }
+                    if(this.sortCol === col) this.sortAsc = !this.sortAsc;
                     else { this.sortCol = col; this.sortAsc = true; }
                 },
 
@@ -278,7 +370,7 @@
                             clearInterval(checkFirebase);
                             window.fbAuth.onAuthStateChanged(window.fbAuth.auth, (user) => {
                                 this.user = user;
-                                if (user) this.loadFromCloud();
+                                if (user) Object.values(this.charts).forEach(c => c && c.destroy()), this.loadFromCloud();
                             });
                         }
                     }, 50);
@@ -296,7 +388,6 @@
                     const loaded = [];
                     querySnapshot.forEach((doc) => { loaded.push(doc.data()); });
                     this.items = loaded;
-                    setTimeout(() => this.initChart(), 300);
                 },
 
                 markDirty(item) {
@@ -305,10 +396,7 @@
                 },
 
                 async handleFileSelect(event) { await this.processFiles(event.target.files); },
-                async handleDrop(event) {
-                    this.dragOver = false;
-                    await this.processFiles(event.dataTransfer.files);
-                },
+                async handleDrop(event) { this.dragOver = false; await this.processFiles(event.dataTransfer.files); },
 
                 async processFiles(fileList) {
                     let filesProcessed = 0;
@@ -322,13 +410,9 @@
                             filesProcessed++;
                         }
                     }
-                    if(filesProcessed > 0) {
-                        this.updateCharts();
-                        alert(`¡Absorbidas y procesadas con éxito! Recuerda darle al botón "☁️ Sincronizar Nube" para asegurar todo en la base de datos central.`);
-                    }
+                    if(filesProcessed > 0) alert(`¡Procesadas! \n\nNo olvides revisar las asignaciones de Categoría. Si la categoría de la AI fue equivocada, cámbiala y da click en Sincronizar Nube.`);
                 },
 
-                // Lógica súper nativa para digerir un XML de Factura CFDI
                 async parseXML(file) {
                     const text = await file.text();
                     const parser = new DOMParser();
@@ -352,25 +436,18 @@
                     const newRows = conceptos.map(c => {
                         const sku = c.getAttribute("NoIdentificacion") || "";
                         const prod = c.getAttribute("Descripcion");
-                        // Motor de aprendizaje: Buscar si ya lo categorizamos en el pasado (Nube)
                         const historyMatch = this.items.find(i => (i.SKU === sku && sku !== "") || i.Producto === prod);
                         const autoCat = historyMatch ? historyMatch.Categoria : 'Sin Asignar';
-                        
                         return {
-                            Fecha: fecha,
-                            Proveedor: emisorNombre,
-                            SKU: sku,
-                            Producto: prod,
+                            Fecha: fecha, Proveedor: emisorNombre, SKU: sku, Producto: prod,
                             Cantidad: parseFloat(c.getAttribute("Cantidad")),
                             Costo_Unitario: parseFloat(c.getAttribute("ValorUnitario")),
                             Subtotal_Total: parseFloat(c.getAttribute("Importe")),
-                            UUID_Factura: uuid,
-                            Categoria: autoCat,
-                            ModifiedBy: this.user.email,
+                            UUID_Factura: uuid, Categoria: autoCat, ModifiedBy: this.user.email,
                             FB_ID: (uuid + "_" + prod.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
                         };
                     });
-                    
+                    this.sessionAddedUUIDs.push(uuid);
                     this.pushNewRows(newRows);
                 },
 
@@ -384,15 +461,12 @@
                                     const historyMatch = this.items.find(i => (i.SKU === sku && sku !== "") || i.Producto === row.Producto);
                                     let cat = row.Categoria || 'Sin Asignar';
                                     if(cat === 'Sin Asignar' && historyMatch) cat = historyMatch.Categoria;
-
                                     return {
-                                        ...row,
-                                        SKU: sku,
-                                        Categoria: cat,
-                                        ModifiedBy: this.user.email,
+                                        ...row, SKU: sku, Categoria: cat, ModifiedBy: this.user.email,
                                         FB_ID: (row.UUID_Factura + "_" + row.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
                                     };
                                 });
+                                if(newRows.length > 0) this.sessionAddedUUIDs.push(newRows[0].UUID_Factura);
                                 this.pushNewRows(newRows);
                                 resolve();
                             }
@@ -404,7 +478,7 @@
                     rows.forEach(nr => {
                         const exists = this.items.findIndex(i => i.FB_ID === nr.FB_ID);
                         if(exists === -1) {
-                            this.items.unshift(nr); // Añadir arriba
+                            this.items.unshift(nr);
                             this.dirtyItems.add(nr);
                         }
                     });
@@ -413,21 +487,20 @@
                 async syncToCloud() {
                     if (this.dirtyItems.size === 0) return alert("Todo está sincronizado con la nube de HerraMax.");
                     this.isSyncing = true;
-                    
                     try {
                         const batch = window.fbDb.writeBatch(window.fbDb.db);
                         let count = 0;
-                        
                         this.dirtyItems.forEach(item => {
                             if (!item.FB_ID) item.FB_ID = (item.UUID_Factura + "_" + item.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60);
                             const docRef = window.fbDb.doc(window.fbDb.db, "purchase_lines", item.FB_ID);
                             batch.set(docRef, Alpine.raw(item));
                             count++;
                         });
-                        
                         await batch.commit();
                         this.dirtyItems.clear();
-                        alert(`¡Sincronización exitosa! ${count} artículos actualizados en la nube.`);
+                        this.sessionAddedUUIDs = []; // clear session tracking
+                        alert(`¡Sincronización exitosa! ${count} artículos consolidados en la nube.`);
+                        if(this.currentTab === 'dashboard') this.initCharts();
                     } catch (e) {
                         console.error(e);
                         alert("Error al sincronizar.");
@@ -435,49 +508,96 @@
                     this.isSyncing = false;
                 },
 
-                initChart() {
-                    const ctx = document.getElementById('categoryChart');
-                    if(!ctx) return;
-                    if(this.chartInstance) this.chartInstance.destroy();
-                    this.chartInstance = new Chart(ctx.getContext('2d'), {
-                        type: 'doughnut', data: this.getChartData(),
-                        options: {
-                            responsive: true, maintainAspectRatio: false,
-                            plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } },
-                            borderWidth: 0, cutout: '70%'
-                        }
-                    });
-                },
-                getChartData() {
-                    const catTotals = {};
-                    this.items.forEach(i => { catTotals[i.Categoria] = (catTotals[i.Categoria] || 0) + parseFloat(i.Subtotal_Total); });
-                    return {
-                        labels: Object.keys(catTotals),
-                        datasets: [{ data: Object.values(catTotals), backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6', '#64748b', '#ef4444', '#14b8a6', '#f43f5e'] }]
-                    };
-                },
-                updateCharts() { this.chartInstance ? (this.chartInstance.data = this.getChartData(), this.chartInstance.update()) : this.initChart(); },
-
                 exportOdooPOs() {
                     const byInvoice = {};
-                    this.items.forEach(i => {
+                    this.items.filter(i => this.sessionAddedUUIDs.length===0 || this.sessionAddedUUIDs.includes(i.UUID_Factura)).forEach(i => {
                         if(!byInvoice[i.UUID_Factura]) byInvoice[i.UUID_Factura] = [];
                         byInvoice[i.UUID_Factura].push({
-                            'default_code': i.SKU, // Referencia Interna para Odoo
-                            'Nombre': i.Producto, 'Cantidad': i.Cantidad, 'Precio_Unitario': i.Costo_Unitario,
-                            'Categoria_Odoo': i.Categoria, 'Info_Proveedor': i.Proveedor
+                            'default_code': i.SKU, 'Nombre': i.Producto, 'Cantidad': i.Cantidad, 
+                            'Precio_Unitario': i.Costo_Unitario, 'Categoria_Odoo': i.Categoria, 'Info_Proveedor': i.Proveedor
                         });
                     });
-                    Object.keys(byInvoice).forEach((uuid, idx) => {
+                    const uuids = Object.keys(byInvoice);
+                    if(uuids.length===0) return alert("No hay datos en sesión para exportar.");
+                    uuids.forEach((uuid, idx) => {
                         setTimeout(() => {
                             const csv = Papa.unparse(byInvoice[uuid]);
                             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                             const link = document.createElement("a");
                             link.href = URL.createObjectURL(blob);
-                            const supplierName = byInvoice[uuid][0].Info_Proveedor.replace(/\s+/g, '_').substring(0,10);
+                            const supplierName = byInvoice[uuid][0].Info_Proveedor.replace(/[^a-zA-Z]/g, '_').substring(0,10);
                             link.download = `Odoo_PO_${supplierName}_${uuid.substring(0,8)}.csv`;
                             link.click();
                         }, idx * 500); 
+                    });
+                },
+
+                downloadFlexTable() {
+                    if(this.flexTableItems.length === 0) return;
+                    const cleanData = this.flexTableItems.map(i => ({
+                        'Fecha': i.Fecha, 'Proveedor': i.Proveedor, 'SKU': i.SKU, 'Producto': i.Producto,
+                        'Categoria_Odoo': i.Categoria, 'Cantidad': i.Cantidad, 'Costo_Unitario': i.Costo_Unitario,
+                        'Subtotal_Total': i.Subtotal_Total
+                    }));
+                    const csv = Papa.unparse(cleanData);
+                    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement("a");
+                    link.href = URL.createObjectURL(blob);
+                    const safeFilter = this.dashFilter ? this.dashFilter.value.replace(/[^a-zA-Z0-9]/g, '_') : 'General';
+                    link.download = `HerraMax_Reporte_${safeFilter}.csv`;
+                    link.click();
+                },
+
+                // ------------------ CHARTS ENGINE ------------------
+                initCharts() {
+                    this.createChart('catChart', 'Categoría', this.aggregateBy('Categoria'), 'doughnut', ['#3b82f6', '#f59e0b', '#10b981', '#ef4444', '#8b5cf6', '#06b6d4']);
+                    
+                    const mesAgg = {};
+                    this.items.forEach(i => { const m = (i.Fecha||'').substring(0,7); mesAgg[m] = (mesAgg[m]||0) + parseFloat(i.Subtotal_Total); });
+                    const sortedMes = Object.keys(mesAgg).sort().reduce((obj, key) => { obj[key] = mesAgg[key]; return obj; }, {});
+                    this.createChart('monthChart', 'Mes', sortedMes, 'line', ['#10b981']);
+
+                    const provAgg = this.aggregateBy('Proveedor');
+                    const topProv = Object.entries(provAgg).sort((a,b)=>b[1]-a[1]).slice(0,5).reduce((obj, [k,v]) => { obj[k]=v; return obj; }, {});
+                    this.createChart('provChart', 'Proveedor', topProv, 'bar', ['#3b82f6']);
+                },
+
+                aggregateBy(field) {
+                    const map = {};
+                    this.items.forEach(i => { map[i[field]] = (map[i[field]] || 0) + parseFloat(i.Subtotal_Total||0); });
+                    return map;
+                },
+
+                createChart(canvasId, filterType, dataMap, cType, colors) {
+                    const ctx = document.getElementById(canvasId);
+                    if(!ctx) return;
+                    if(this.charts[canvasId]) this.charts[canvasId].destroy();
+                    
+                    this.charts[canvasId] = new Chart(ctx.getContext('2d'), {
+                        type: cType,
+                        data: {
+                            labels: Object.keys(dataMap),
+                            datasets: [{
+                                data: Object.values(dataMap),
+                                backgroundColor: cType==='doughnut' ? colors : colors[0],
+                                borderColor: cType==='line' ? colors[0] : 'transparent',
+                                tension: 0.3, fill: true
+                            }]
+                        },
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { display: cType==='doughnut', position: 'bottom', labels:{color:'#cbd5e1'} } },
+                            scales: cType!=='doughnut' ? {
+                                x: { ticks: {color: '#94a3b8'} }, y: { ticks: {color: '#94a3b8'} }
+                            } : {},
+                            onClick: (e, elements) => {
+                                if(elements.length > 0) {
+                                    const idx = elements[0].index;
+                                    const label = this.charts[canvasId].data.labels[idx];
+                                    this.dashFilter = { type: filterType, value: label };
+                                }
+                            }
+                        }
                     });
                 }
             }));
