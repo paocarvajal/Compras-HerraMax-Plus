@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerraMax | Inteligencia de Compras</title>
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js"></script>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- PapaParse -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        dark: '#0f172a',
+                        card: '#1e293b',
+                        primary: '#3b82f6',
+                        accent: '#f59e0b'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0f172a; color: #f8fafc; }
+        .glass { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .custom-scrollbar::-webkit-scrollbar { width: 8px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+    </style>
+</head>
+<body class="min-h-screen text-slate-200" x-data="procurementApp()">
+
+    <!-- Modulo Firebase ESM -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+        import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+            apiKey: "AIzaSyAa57ppjWFUcEdniw9WScABHssyACP3x3k",
+            authDomain: "compras-herramax.firebaseapp.com",
+            projectId: "compras-herramax",
+            storageBucket: "compras-herramax.firebasestorage.app",
+            messagingSenderId: "558573642669",
+            appId: "1:558573642669:web:f967def7deb883fa16b724",
+            measurementId: "G-WZP1DXCWS0"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        window.fbAuth = { auth: getAuth(app), signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut };
+        window.fbDb = { db: getFirestore(app), collection, doc, setDoc, getDocs, writeBatch };
+    </script>
+
+    <!-- Navbar -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4 flex justify-between items-center shadow-lg">
+        <div class="flex items-center gap-3">
+            <div class="h-8 w-8 rounded bg-gradient-to-br from-primary to-blue-300 flex items-center justify-center font-bold text-white shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                HM
+            </div>
+            <h1 class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">
+                Purchasing Intelligence
+            </h1>
+        </div>
+        
+        <div class="flex items-center gap-4">
+            <!-- Login State -->
+            <template x-if="!user">
+                <button @click="login()" class="px-4 py-2 bg-white text-slate-800 hover:bg-slate-200 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
+                    Ingresar con Google
+                </button>
+            </template>
+            
+            <template x-if="user">
+                <div class="flex items-center gap-4">
+                    <div class="flex items-center gap-2 text-sm text-slate-300">
+                        <img :src="user.photoURL" class="w-8 h-8 rounded-full border border-primary">
+                        <span x-text="user.email"></span>
+                    </div>
+                    <button @click="syncToCloud()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm font-semibold transition-all flex items-center gap-2" :class="isSyncing ? 'animate-pulse' : ''">
+                        ☁️ Sincronizar Nube
+                    </button>
+                    <button @click="exportOdooPOs()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-primary hover:from-blue-500 rounded-lg text-sm font-semibold transition-all shadow-[0_0_15px_rgba(59,130,246,0.5)]">
+                        🚀 Exportar Odoo POs
+                    </button>
+                    <button @click="logout()" class="text-xs text-red-400 hover:text-red-300 underline">Salir</button>
+                </div>
+            </template>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="p-6 max-w-7xl mx-auto space-y-6">
+        
+        <!-- Auth Warning -->
+        <div x-show="!user" class="glass p-8 rounded-2xl border border-accent/50 text-center">
+            <h2 class="text-2xl font-bold mb-2">🔒 Acceso Restringido</h2>
+            <p class="text-slate-400 mb-4">Inicia sesión con tu cuenta de Google Autorizada para ver y guardar el histórico de compras de HerraMax Plus.</p>
+        </div>
+
+        <template x-if="user">
+            <div>
+                <!-- Extractor / Uploader -->
+                <div class="glass p-6 rounded-2xl border border-slate-700/50 flex flex-col justify-center text-center transition-all mb-6"
+                     @dragover.prevent="dragOver = true" 
+                     @dragleave.prevent="dragOver = false" 
+                     @drop.prevent="handleDrop($event)"
+                     :class="dragOver ? 'border-primary bg-primary/10' : ''">
+                    
+                    <h2 class="text-xl font-bold mb-2">Añadir Nuevas Facturas</h2>
+                    <p class="text-sm text-slate-400 mb-4">Arrastra el nuevo CSV aquí para adjuntarlo al Master Cloud.</p>
+                    <label class="cursor-pointer px-4 py-2 bg-primary hover:bg-blue-500 rounded-lg font-semibold transition-colors mx-auto inline-block text-sm">
+                        <span>📥 Seleccionar Archivo Local</span>
+                        <input type="file" accept=".csv" class="hidden" @change="handleFileSelect">
+                    </label>
+                </div>
+
+                <div x-show="items.length > 0">
+                    <!-- KPI Dashboard -->
+                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+                        <div class="glass p-5 rounded-xl border border-slate-700/50">
+                            <p class="text-sm text-slate-400 font-semibold mb-1">Gasto Histórico Nube</p>
+                            <p class="text-3xl font-bold text-white" x-text="'$' + totalSpent.toLocaleString('en-US', {minimumFractionDigits: 2})"></p>
+                        </div>
+                        <div class="glass p-5 rounded-xl border border-slate-700/50">
+                            <p class="text-sm text-slate-400 font-semibold mb-1">Artículos Únicos</p>
+                            <p class="text-3xl font-bold text-blue-400" x-text="items.length"></p>
+                        </div>
+                        <div class="glass p-5 rounded-xl border border-slate-700/50">
+                            <p class="text-sm text-slate-400 font-semibold mb-1">Facturas Procesadas</p>
+                            <p class="text-3xl font-bold text-accent" x-text="uniqueInvoices.length"></p>
+                        </div>
+                        <div class="glass p-5 rounded-xl border border-slate-700/50">
+                            <p class="text-sm text-slate-400 font-semibold mb-1">Top Proveedor</p>
+                            <p class="text-xl font-bold text-green-400 truncate" x-text="topSupplier"></p>
+                        </div>
+                    </div>
+
+                    <!-- Analysis Space -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+                        <!-- Data Table -->
+                        <div class="lg:col-span-2 glass rounded-xl border border-slate-700/50 flex flex-col h-[600px]">
+                            <div class="p-4 border-b border-slate-700 flex justify-between items-center bg-slate-800/50 rounded-t-xl">
+                                <h3 class="font-semibold text-lg">🛍️ Líneas de Compra (Sincronizado)</h3>
+                                <input type="text" x-model="searchQuery" placeholder="Buscar producto..." class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1 text-sm focus:outline-none focus:border-primary">
+                            </div>
+                            <div class="overflow-y-auto custom-scrollbar flex-1">
+                                <table class="w-full text-left text-sm whitespace-nowrap">
+                                    <thead class="sticky top-0 bg-slate-800/90 backdrop-blur text-slate-300">
+                                        <tr>
+                                            <th class="px-4 py-3 font-medium">Producto</th>
+                                            <th class="px-4 py-3 font-medium">Categoría Odoo</th>
+                                            <th class="px-4 py-3 font-medium text-right">Cant</th>
+                                            <th class="px-4 py-3 font-medium text-right">Subtotal</th>
+                                            <th class="px-4 py-3 font-medium text-center">Clasificado por</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-slate-700/50">
+                                        <template x-for="(item, index) in filteredItems" :key="index">
+                                            <tr class="hover:bg-slate-700/30 transition-colors">
+                                                <td class="px-4 py-2 truncate max-w-[200px]" :title="item.Producto" x-text="item.Producto"></td>
+                                                <td class="px-4 py-2">
+                                                    <select x-model="item.Categoria" @change="updateCharts(); markDirty(item)" class="bg-slate-900 border border-slate-600 rounded text-xs px-2 py-1 focus:outline-none focus:border-primary w-32">
+                                                        <option value="Sin Asignar">Sin Asignar</option>
+                                                        <option value="Electricidad">Electricidad</option>
+                                                        <option value="Plomería">Plomería</option>
+                                                        <option value="Herramienta Manual">Herr. Manual</option>
+                                                        <option value="Herramienta Eléctrica">Herr. Eléctrica</option>
+                                                        <option value="Tornillería y Fijación">Tornillería</option>
+                                                        <option value="Cerrajería">Cerrajería</option>
+                                                        <option value="Iluminación">Iluminación</option>
+                                                        <option value="Materiales Construcción">Construcción</option>
+                                                    </select>
+                                                </td>
+                                                <td class="px-4 py-2 text-right" x-text="item.Cantidad"></td>
+                                                <td class="px-4 py-2 text-right font-medium text-blue-300" x-text="'$' + parseFloat(item.Subtotal_Total).toFixed(2)"></td>
+                                                <td class="px-4 py-2 text-center text-xs text-slate-500" x-text="item.ModifiedBy || 'N/A'"></td>
+                                            </tr>
+                                        </template>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Charts Area -->
+                        <div class="glass rounded-xl border border-slate-700/50 p-4 h-[600px] flex flex-col">
+                            <h3 class="font-semibold text-lg mb-4">📊 Gasto por Categoría</h3>
+                            <div class="flex-1 relative">
+                                <canvas id="categoryChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </template>
+    </main>
+
+    <script>
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('procurementApp', () => ({
+                user: null,
+                items: [],
+                searchQuery: '',
+                chartInstance: null,
+                dragOver: false,
+                isSyncing: false,
+                dirtyItems: new Set(),
+
+                get totalSpent() { return this.items.reduce((sum, item) => sum + (parseFloat(item.Subtotal_Total) || 0), 0); },
+                get uniqueInvoices() { return [...new Set(this.items.map(i => i.UUID_Factura).filter(Boolean))]; },
+                get topSupplier() {
+                    if (this.items.length === 0) return '-';
+                    const counts = {};
+                    this.items.forEach(i => { counts[i.Proveedor] = (counts[i.Proveedor] || 0) + parseFloat(i.Subtotal_Total); });
+                    return Object.keys(counts).reduce((a, b) => counts[a] > counts[b] ? a : b);
+                },
+                get filteredItems() {
+                    if (this.searchQuery === '') return this.items;
+                    const lq = this.searchQuery.toLowerCase();
+                    return this.items.filter(i => i.Producto && i.Producto.toLowerCase().includes(lq));
+                },
+
+                init() {
+                    // Esperar a que el script de módulo inyecte window.fbAuth
+                    const checkFirebase = setInterval(() => {
+                        if (window.fbAuth) {
+                            clearInterval(checkFirebase);
+                            window.fbAuth.onAuthStateChanged(window.fbAuth.auth, (user) => {
+                                this.user = user;
+                                if (user) this.loadFromCloud();
+                            });
+                        }
+                    }, 50);
+                },
+                
+                async login() {
+                    const provider = new window.fbAuth.GoogleAuthProvider();
+                    try { await window.fbAuth.signInWithPopup(window.fbAuth.auth, provider); } 
+                    catch (error) { console.error("Login failed", error); }
+                },
+
+                async logout() {
+                    await window.fbAuth.signOut(window.fbAuth.auth);
+                },
+
+                async loadFromCloud() {
+                    const querySnapshot = await window.fbDb.getDocs(window.fbDb.collection(window.fbDb.db, "purchase_lines"));
+                    const loaded = [];
+                    querySnapshot.forEach((doc) => { loaded.push(doc.data()); });
+                    this.items = loaded;
+                    setTimeout(() => this.initChart(), 300);
+                },
+
+                markDirty(item) {
+                    item.ModifiedBy = this.user.email;
+                    this.dirtyItems.add(item);
+                },
+
+                handleFileSelect(event) {
+                    const file = event.target.files[0];
+                    if (file) this.parseCSV(file);
+                },
+                handleDrop(event) {
+                    this.dragOver = false;
+                    if (event.dataTransfer.files.length > 0) this.parseCSV(event.dataTransfer.files[0]);
+                },
+
+                parseCSV(file) {
+                    Papa.parse(file, {
+                        header: true, skipEmptyLines: true,
+                        complete: (results) => {
+                            const newRows = results.data.map(row => ({
+                                ...row,
+                                Categoria: row.Categoria || 'Sin Asignar',
+                                ModifiedBy: this.user.email,
+                                // ID local unico para Firebase: (UUID + Limpiar Producto)
+                                FB_ID: (row.UUID_Factura + "_" + row.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
+                            }));
+                            
+                            // Combinar o actualizar con lo que existe
+                            newRows.forEach(nr => {
+                                const exists = this.items.findIndex(i => i.FB_ID === nr.FB_ID);
+                                if(exists === -1) {
+                                    this.items.push(nr);
+                                    this.dirtyItems.add(nr);
+                                }
+                            });
+                            
+                            this.updateCharts();
+                            alert("Archivo cargado localmente. Recuerda presionar 'Sincronizar' para guardar en la nube.");
+                        }
+                    });
+                },
+
+                async syncToCloud() {
+                    if (this.dirtyItems.size === 0) return alert("Todo está sincronizado.");
+                    this.isSyncing = true;
+                    
+                    try {
+                        const batch = window.fbDb.writeBatch(window.fbDb.db);
+                        let count = 0;
+                        
+                        this.dirtyItems.forEach(item => {
+                            if (!item.FB_ID) item.FB_ID = (item.UUID_Factura + "_" + item.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60);
+                            const docRef = window.fbDb.doc(window.fbDb.db, "purchase_lines", item.FB_ID);
+                            batch.set(docRef, Alpine.raw(item));
+                            count++;
+                        });
+                        
+                        await batch.commit();
+                        this.dirtyItems.clear();
+                        alert(`¡Sincronización exitosa! ${count} artículos actualizados en la nube.`);
+                    } catch (e) {
+                        console.error("Error sincronizando", e);
+                        alert("Error al sincronizar con Firebase.");
+                    }
+                    this.isSyncing = false;
+                },
+
+                initChart() {
+                    const ctx = document.getElementById('categoryChart');
+                    if(!ctx) return;
+                    if(this.chartInstance) this.chartInstance.destroy();
+                    
+                    this.chartInstance = new Chart(ctx.getContext('2d'), {
+                        type: 'doughnut',
+                        data: this.getChartData(),
+                        options: {
+                            responsive: true, maintainAspectRatio: false,
+                            plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } },
+                            borderWidth: 0, cutout: '70%'
+                        }
+                    });
+                },
+                
+                getChartData() {
+                    const catTotals = {};
+                    this.items.forEach(i => {
+                        catTotals[i.Categoria] = (catTotals[i.Categoria] || 0) + parseFloat(i.Subtotal_Total);
+                    });
+                    
+                    return {
+                        labels: Object.keys(catTotals),
+                        datasets: [{
+                            data: Object.values(catTotals),
+                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6', '#64748b', '#ef4444', '#14b8a6', '#f43f5e']
+                        }]
+                    };
+                },
+                
+                updateCharts() {
+                    if(this.chartInstance) {
+                        this.chartInstance.data = this.getChartData();
+                        this.chartInstance.update();
+                    } else {
+                        this.initChart();
+                    }
+                },
+
+                exportOdooPOs() {
+                    const byInvoice = {};
+                    this.items.forEach(i => {
+                        if(!byInvoice[i.UUID_Factura]) byInvoice[i.UUID_Factura] = [];
+                        byInvoice[i.UUID_Factura].push({
+                            'Nombre': i.Producto,
+                            'Cantidad': i.Cantidad,
+                            'Precio_Unitario': i.Costo_Unitario,
+                            'Categoria_Odoo': i.Categoria,
+                            'Info_Proveedor': i.Proveedor
+                        });
+                    });
+
+                    Object.keys(byInvoice).forEach((uuid, idx) => {
+                        setTimeout(() => {
+                            const csv = Papa.unparse(byInvoice[uuid]);
+                            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            const link = document.createElement("a");
+                            link.href = URL.createObjectURL(blob);
+                            const supplierName = byInvoice[uuid][0].Info_Proveedor.replace(/\s+/g, '_').substring(0,10);
+                            link.download = `Odoo_PO_${supplierName}_${uuid.substring(0,8)}.csv`;
+                            link.click();
+                        }, idx * 500); 
+                    });
+                }
+            }));
+        });
+    </script>
+</body>
+</html>
