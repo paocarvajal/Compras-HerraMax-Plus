@@ -156,7 +156,7 @@
                             <div class="overflow-y-auto custom-scrollbar flex-1">
                                 <table class="w-full text-left text-sm whitespace-nowrap">
                                     <thead class="sticky top-0 bg-slate-800/90 backdrop-blur text-slate-300">
-                                        <tr>
+                                            <th class="px-4 py-3 font-medium">SKU (Código)</th>
                                             <th class="px-4 py-3 font-medium">Producto</th>
                                             <th class="px-4 py-3 font-medium">Categoría Odoo</th>
                                             <th class="px-4 py-3 font-medium text-right">Cant</th>
@@ -167,6 +167,7 @@
                                     <tbody class="divide-y divide-slate-700/50">
                                         <template x-for="(item, index) in filteredItems" :key="item.FB_ID || index">
                                             <tr class="hover:bg-slate-700/30 transition-colors">
+                                                <td class="px-4 py-2 font-mono text-xs text-accent" x-text="item.SKU || '-'"></td>
                                                 <td class="px-4 py-2 truncate max-w-[200px]" :title="item.Producto" x-text="item.Producto"></td>
                                                 <td class="px-4 py-2">
                                                     <select x-model="item.Categoria" @change="updateCharts(); markDirty(item)" class="bg-slate-900 border border-slate-600 rounded text-xs px-2 py-1 focus:outline-none focus:border-primary w-32">
@@ -304,6 +305,7 @@
                     const newRows = conceptos.map(c => ({
                         Fecha: fecha,
                         Proveedor: emisorNombre,
+                        SKU: c.getAttribute("NoIdentificacion") || "",
                         Producto: c.getAttribute("Descripcion"),
                         Cantidad: parseFloat(c.getAttribute("Cantidad")),
                         Costo_Unitario: parseFloat(c.getAttribute("ValorUnitario")),
@@ -324,6 +326,7 @@
                             complete: (results) => {
                                 const newRows = results.data.map(row => ({
                                     ...row,
+                                    SKU: row.SKU || row.NoIdentificacion || "",
                                     Categoria: row.Categoria || 'Sin Asignar',
                                     ModifiedBy: this.user.email,
                                     FB_ID: (row.UUID_Factura + "_" + row.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
@@ -398,6 +401,7 @@
                     this.items.forEach(i => {
                         if(!byInvoice[i.UUID_Factura]) byInvoice[i.UUID_Factura] = [];
                         byInvoice[i.UUID_Factura].push({
+                            'default_code': i.SKU, // Referencia Interna para Odoo
                             'Nombre': i.Producto, 'Cantidad': i.Cantidad, 'Precio_Unitario': i.Costo_Unitario,
                             'Categoria_Odoo': i.Categoria, 'Info_Proveedor': i.Proveedor
                         });
