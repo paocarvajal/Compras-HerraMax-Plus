@@ -9,614 +9,557 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script>
-        tailwind.config = { theme: { extend: { fontFamily: { sans: ['Inter','sans-serif'] }, colors: { dark:'#0f172a', card:'#1e293b', primary:'#3b82f6', accent:'#f59e0b' } } } }
-    </script>
+    <script>tailwind.config={theme:{extend:{fontFamily:{sans:['Inter','sans-serif']},colors:{dark:'#0f172a',card:'#1e293b',primary:'#3b82f6',accent:'#f59e0b'}}}}</script>
     <style>
-        body { font-family:'Inter',sans-serif; background:#0f172a; color:#f8fafc; }
-        .glass { background:rgba(30,41,59,0.7); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.1); }
-        .custom-scrollbar::-webkit-scrollbar{width:6px} .custom-scrollbar::-webkit-scrollbar-track{background:#1e293b} .custom-scrollbar::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}
-        .resizable-th { resize:horizontal; overflow:auto; position:relative; min-width:60px; }
-        .resizable-th::after { content:''; position:absolute; right:0;top:0;bottom:0;width:3px; cursor:col-resize; background:rgba(255,255,255,0.1); }
-        .chip { display:inline-flex;align-items:center;gap:4px;padding:2px 10px;border-radius:999px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.15s; }
-        .chip-active { background:#3b82f6;color:#fff; }
-        .chip-inactive { background:#1e293b;color:#94a3b8;border:1px solid #334155; }
-        .chip-inactive:hover { border-color:#3b82f6;color:#93c5fd; }
-        .filter-pill { display:inline-flex;align-items:center;gap:6px;padding:3px 12px;background:#1e3a5f;border:1px solid #3b82f6;border-radius:999px;font-size:11px;color:#93c5fd; }
-        .group-header { background:rgba(59,130,246,0.08);border-left:3px solid #3b82f6; }
-        tr.group-header td { padding:6px 16px;font-weight:700;color:#93c5fd;font-size:11px;letter-spacing:.05em;text-transform:uppercase; }
+        body{font-family:'Inter',sans-serif;background:#0f172a;color:#f8fafc}
+        .glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1)}
+        .cs::-webkit-scrollbar{width:6px} .cs::-webkit-scrollbar-track{background:#1e293b} .cs::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}
+        .rth{resize:horizontal;overflow:auto;position:relative;min-width:50px}
+        .rth::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;cursor:col-resize;background:rgba(255,255,255,0.08)}
+        .chip{display:inline-flex;align-items:center;padding:2px 12px;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
+        .ca{background:#3b82f6;color:#fff} .ci{background:#1e293b;color:#94a3b8;border:1px solid #334155} .ci:hover{border-color:#3b82f6;color:#93c5fd}
+        .fpill{display:inline-flex;align-items:center;gap:5px;padding:2px 10px;background:#1e3a5f;border:1px solid #3b82f6;border-radius:999px;font-size:11px;color:#93c5fd}
+        tr.grp-hdr{background:rgba(59,130,246,0.1);border-left:3px solid #3b82f6;cursor:pointer}
+        tr.grp-hdr:hover{background:rgba(59,130,246,0.18)}
+        tr.grp-hdr td{padding:6px 12px;font-weight:700;color:#93c5fd;font-size:11px;letter-spacing:.04em}
+        .sort-th{cursor:pointer;user-select:none} .sort-th:hover{background:rgba(255,255,255,0.04)}
     </style>
 </head>
-<body class="min-h-screen" x-data="procurementApp()">
+<body class="min-h-screen" x-data="app()">
 
-    <!-- Firebase -->
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
-        import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
-        import { getFirestore, collection, doc, setDoc, getDocs, writeBatch } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
-        const app = initializeApp({ apiKey:"AIzaSyAa57ppjWFUcEdniw9WScABHssyACP3x3k", authDomain:"compras-herramax.firebaseapp.com", projectId:"compras-herramax", storageBucket:"compras-herramax.firebasestorage.app", messagingSenderId:"558573642669", appId:"1:558573642669:web:f967def7deb883fa16b724" });
-        window.fbAuth = { auth:getAuth(app), signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut };
-        window.fbDb  = { db:getFirestore(app), collection, doc, setDoc, getDocs, writeBatch };
-    </script>
+<script type="module">
+    import{initializeApp}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+    import{getAuth,signInWithPopup,GoogleAuthProvider,onAuthStateChanged,signOut}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-auth.js";
+    import{getFirestore,collection,doc,setDoc,getDocs,writeBatch}from"https://www.gstatic.com/firebasejs/10.9.0/firebase-firestore.js";
+    const a=initializeApp({apiKey:"AIzaSyAa57ppjWFUcEdniw9WScABHssyACP3x3k",authDomain:"compras-herramax.firebaseapp.com",projectId:"compras-herramax",storageBucket:"compras-herramax.firebasestorage.app",messagingSenderId:"558573642669",appId:"1:558573642669:web:f967def7deb883fa16b724"});
+    window.fbA={auth:getAuth(a),signInWithPopup,GoogleAuthProvider,onAuthStateChanged,signOut};
+    window.fbD={db:getFirestore(a),collection,doc,setDoc,getDocs,writeBatch};
+</script>
 
-    <!-- NAV -->
-    <nav class="glass sticky top-0 z-50 px-6 py-3 flex justify-between items-center shadow-xl">
-        <div class="flex items-center gap-3">
-            <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-blue-300 flex items-center justify-center font-black text-white text-lg shadow-[0_0_18px_rgba(59,130,246,0.6)]">HM</div>
-            <span class="text-xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Purchasing Intelligence</span>
-        </div>
-        <div class="flex items-center gap-3">
-            <template x-if="!user">
-                <button @click="login()" class="px-5 py-2 bg-white text-slate-800 hover:bg-slate-100 rounded-lg text-sm font-bold transition-all">🔑 Ingresar con Google</button>
-            </template>
-            <template x-if="user">
-                <div class="flex items-center gap-3">
-                    <img :src="user.photoURL" class="w-8 h-8 rounded-full border-2 border-primary">
-                    <span class="text-xs text-slate-400 hidden md:block" x-text="user.email"></span>
-                    <button @click="syncToCloud()" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold transition-all" :class="isSyncing?'animate-pulse':''">☁️ Sincronizar</button>
-                    <button @click="exportOdooPOs()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-primary hover:brightness-110 rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(59,130,246,0.4)] transition-all">🚀 Exportar POs</button>
-                    <button @click="logout()" class="text-xs text-red-400 hover:text-red-300">Salir</button>
-                </div>
-            </template>
-        </div>
-    </nav>
-
-    <main class="p-5 max-w-[1500px] mx-auto space-y-4">
-
-        <div x-show="!user" class="glass p-10 rounded-2xl border border-accent/50 text-center mt-10">
-            <div class="text-5xl mb-4">🔒</div>
-            <h2 class="text-2xl font-bold mb-2">Acceso Restringido</h2>
-            <p class="text-slate-400">Inicia sesión con tu cuenta de Google autorizada para gestionar las compras de HerraMax.</p>
-        </div>
-
+<!-- NAV -->
+<nav class="glass sticky top-0 z-50 px-5 py-3 flex justify-between items-center shadow-xl">
+    <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-gradient-to-br from-primary to-blue-300 flex items-center justify-center font-black text-white shadow-[0_0_18px_rgba(59,130,246,0.6)]">HM</div>
+        <span class="text-lg font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400">Purchasing Intelligence</span>
+    </div>
+    <div class="flex items-center gap-3">
+        <template x-if="!user"><button @click="login()" class="px-4 py-2 bg-white text-slate-800 hover:bg-slate-100 rounded-lg text-sm font-bold">🔑 Ingresar con Google</button></template>
         <template x-if="user">
-        <div>
-            <!-- TABS -->
-            <div class="flex gap-2 mb-4 bg-slate-800/60 p-1 rounded-xl w-fit">
-                <button @click="setTab('procesamiento')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="currentTab==='procesamiento'?'bg-primary text-white shadow-lg':'text-slate-400 hover:text-white'">📥 Procesamiento XML / CSV</button>
-                <button @click="setTab('dashboard')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="currentTab==='dashboard'?'bg-accent text-slate-900 shadow-lg':'text-slate-400 hover:text-white'">📊 Dashboard Analítico</button>
+            <div class="flex items-center gap-3">
+                <img :src="user.photoURL" class="w-8 h-8 rounded-full border-2 border-primary">
+                <span class="text-xs text-slate-400 hidden md:block" x-text="user.email"></span>
+                <button @click="syncToCloud()" :class="syncing?'animate-pulse':''" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold transition-all">☁️ Sincronizar</button>
+                <button @click="exportOdooPOs()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-primary rounded-lg text-sm font-bold shadow-[0_0_14px_rgba(59,130,246,0.4)]">🚀 Exportar POs</button>
+                <button @click="logout()" class="text-xs text-red-400 hover:text-red-300">Salir</button>
             </div>
-
-            <!-- ===== TAB PROCESAMIENTO ===== -->
-            <div x-show="currentTab==='procesamiento'" x-transition class="space-y-4">
-
-                <!-- Upload Zone -->
-                <div class="glass p-5 rounded-2xl border border-dashed border-blue-500/40 text-center relative overflow-hidden transition-all"
-                     @dragover.prevent="dragOver=true" @dragleave.prevent="dragOver=false" @drop.prevent="handleDrop($event)"
-                     :class="dragOver?'border-primary bg-primary/10 scale-[1.01]':''">
-                    <div class="absolute -right-8 -top-8 w-28 h-28 bg-primary/15 blur-3xl rounded-full pointer-events-none"></div>
-                    <p class="text-lg font-bold mb-1">Lanza tus Facturas Aquí 📄📦</p>
-                    <p class="text-xs text-slate-400 mb-3">Arrastra archivos <b>.XML</b> (CFDI SAT) o <b>.CSV</b> —el motor extrae SKUs, fechas y precios automáticamente</p>
-                    <label class="cursor-pointer px-5 py-2 bg-primary hover:bg-blue-500 rounded-lg font-bold text-sm transition-colors inline-block">
-                        📥 Seleccionar Archivos
-                        <input type="file" multiple accept=".csv,.xml" class="hidden" @change="handleFileSelect">
-                    </label>
-                </div>
-
-                <!-- KPI Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400 font-semibold">Gasto Histórico Nube</p><p class="text-2xl font-black text-white" x-text="'$'+totalSpent.toLocaleString('en-US',{minimumFractionDigits:2})"></p></div>
-                    <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400 font-semibold">Artículos en Nube</p><p class="text-2xl font-black text-blue-400" x-text="items.length"></p></div>
-                    <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400 font-semibold">Facturas Únicas</p><p class="text-2xl font-black text-accent" x-text="uniqueInvoices.length"></p></div>
-                    <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400 font-semibold mb-1">Fechas Sesión (Evita Dobles)</p><p class="text-sm font-bold text-green-400" x-text="sessionDates"></p></div>
-                </div>
-
-                <!-- Filter Bar -->
-                <div class="glass rounded-xl border border-slate-700/50 p-3 space-y-3">
-                    <div class="flex flex-wrap items-center gap-2">
-                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">Filtros &amp; Agrupamiento</span>
-
-                        <!-- Busqueda -->
-                        <input type="text" x-model="searchQuery" placeholder="🔍 SKU, Producto, Categoría, Proveedor..." class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary flex-1 min-w-[200px]">
-
-                        <!-- Agrupar por -->
-                        <span class="text-xs text-slate-500">Agrupar por:</span>
-                        <template x-for="g in ['Ninguno','Categoria','Proveedor','Fecha']" :key="g">
-                            <button @click="groupBy=g" class="chip" :class="groupBy===g?'chip-active':'chip-inactive'" x-text="g"></button>
-                        </template>
-
-                        <!-- Quick Filters -->
-                        <span class="text-xs text-slate-500 ml-2">Mostrar:</span>
-                        <button @click="filterCat=''" class="chip" :class="filterCat===''?'chip-active':'chip-inactive'">Todos</button>
-                        <button @click="filterCat='Sin Asignar'" class="chip" :class="filterCat==='Sin Asignar'?'bg-red-600 text-white chip':'chip-inactive'">❌ Sin Asignar</button>
-                        <button @click="filterCat='_ok'" class="chip" :class="filterCat==='_ok'?'bg-green-600 text-white':'chip-inactive'">✅ Clasificados</button>
-
-                        <!-- Filtro por proveedor -->
-                        <select x-model="filterProv" class="bg-slate-900 border border-slate-600 rounded-lg px-2 py-1 text-xs focus:outline-none focus:border-primary">
-                            <option value="">Todos los proveedores</option>
-                            <template x-for="p in allProveedores" :key="p"><option :value="p" x-text="p"></option></template>
-                        </select>
-
-                        <!-- Clear -->
-                        <button x-show="searchQuery||filterCat||filterProv" @click="searchQuery='';filterCat='';filterProv=''" class="text-xs text-red-400 hover:text-red-300 underline">limpiar</button>
-                    </div>
-
-                    <!-- Active-filter pills -->
-                    <div x-show="searchQuery||filterCat||filterProv" class="flex flex-wrap gap-2">
-                        <div x-show="searchQuery" class="filter-pill">🔍 "<span x-text="searchQuery"></span>" <button @click="searchQuery=''" class="ml-1 text-blue-300 hover:text-white">✕</button></div>
-                        <div x-show="filterCat==='Sin Asignar'" class="filter-pill border-red-500 text-red-300">❌ Sin Asignar <button @click="filterCat=''" class="ml-1 hover:text-white">✕</button></div>
-                        <div x-show="filterCat==='_ok'" class="filter-pill border-green-500 text-green-300">✅ Clasificados <button @click="filterCat=''" class="ml-1 hover:text-white">✕</button></div>
-                        <div x-show="filterProv" class="filter-pill">📦 <span x-text="filterProv"></span> <button @click="filterProv=''" class="ml-1 hover:text-white">✕</button></div>
-                    </div>
-                </div>
-
-                <!-- Counter -->
-                <div class="flex justify-between items-center text-xs text-slate-500 px-1">
-                    <span>Mostrando <b class="text-slate-300" x-text="displayedRowCount"></b> de <b class="text-slate-300" x-text="items.length"></b> artículos</span>
-                    <span>Subtotal filtrado: <b class="text-blue-300" x-text="'$'+filteredSubtotal.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
-                </div>
-
-                <!-- Table -->
-                <div class="glass rounded-xl border border-slate-700/50 flex flex-col" style="height:560px">
-                    <div class="overflow-y-auto custom-scrollbar flex-1">
-                        <table class="w-full text-left text-xs">
-                            <thead class="sticky top-0 bg-slate-800/95 backdrop-blur text-slate-300 z-10">
-                                <tr>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none" @click="sortBy('SKU')">SKU / NumParte <span x-show="sortCol==='SKU'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none" @click="sortBy('Producto')">Descripción <span x-show="sortCol==='Producto'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none" @click="sortBy('Categoria')">Categoría Odoo <span x-show="sortCol==='Categoria'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none text-right" @click="sortBy('Cantidad')">Cant <span x-show="sortCol==='Cantidad'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none text-right" @click="sortBy('Costo_Unitario')">Costo Unit <span x-show="sortCol==='Costo_Unitario'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none text-right" @click="sortBy('Subtotal_Total')">Subtotal <span x-show="sortCol==='Subtotal_Total'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none" @click="sortBy('Proveedor')">Proveedor <span x-show="sortCol==='Proveedor'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-3 font-semibold resizable-th cursor-pointer hover:bg-slate-700/50 select-none" @click="sortBy('Fecha')">Fecha <span x-show="sortCol==='Fecha'" x-text="sortAsc?'🔼':'🔽'"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-700/40">
-                                <template x-for="(row, idx) in groupedRows" :key="idx">
-                                    <!-- Group Header Row -->
-                                    <template x-if="row._isGroup">
-                                        <tr class="group-header">
-                                            <td colspan="8">
-                                                <span x-text="row.label"></span>
-                                                <span class="ml-2 text-slate-400 font-normal">(<span x-text="row.count"></span> artículos · $<span x-text="row.sum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>)</span>
-                                            </td>
-                                        </tr>
-                                    </template>
-                                    <!-- Data Row -->
-                                    <template x-if="!row._isGroup">
-                                        <tr class="hover:bg-slate-700/30 transition-colors" :class="sessionAddedUUIDs.includes(row.UUID_Factura)?'bg-blue-900/10':''">
-                                            <td class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
-                                            <td class="px-3 py-1.5 truncate max-w-[180px]" :title="row.Producto" x-text="row.Producto"></td>
-                                            <td class="px-3 py-1.5">
-                                                <select x-model="row.Categoria" @change="markDirty(row)"
-                                                    class="bg-slate-900 border rounded px-1.5 py-0.5 focus:outline-none focus:border-primary text-xs font-semibold w-36"
-                                                    :class="row.Categoria&&row.Categoria!=='Sin Asignar'?'border-green-600 text-green-400':'border-red-700 text-red-400'">
-                                                    <option>Sin Asignar</option>
-                                                    <template x-for="cat in odooCategories" :key="cat"><option :value="cat" x-text="cat"></option></template>
-                                                </select>
-                                            </td>
-                                            <td class="px-3 py-1.5 text-right" x-text="row.Cantidad"></td>
-                                            <td class="px-3 py-1.5 text-right font-mono" x-text="'$'+(parseFloat(row.Costo_Unitario)||0).toFixed(2)"></td>
-                                            <td class="px-3 py-1.5 text-right font-mono font-bold text-blue-300" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
-                                            <td class="px-3 py-1.5 text-slate-500 truncate max-w-[130px]" :title="row.Proveedor" x-text="row.Proveedor"></td>
-                                            <td class="px-3 py-1.5 text-slate-500" x-text="row.Fecha"></td>
-                                        </tr>
-                                    </template>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-            <!-- ===== TAB DASHBOARD ===== -->
-            <div x-show="currentTab==='dashboard'" x-transition style="display:none" class="space-y-4">
-
-                <!-- Dashboard Filters Bar -->
-                <div class="glass rounded-xl border border-slate-700/50 p-3 flex flex-wrap items-center gap-3">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide">Filtros Dashboard:</span>
-
-                    <!-- Proveedor pill -->
-                    <select x-model="dashProvFilter" @change="applyDashFilter('Proveedor',dashProvFilter)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-accent">
-                        <option value="">Todos los proveedores</option>
-                        <template x-for="p in allProveedores" :key="p"><option :value="p" x-text="p"></option></template>
-                    </select>
-
-                    <!-- Categoria pill -->
-                    <select x-model="dashCatFilter" @change="applyDashFilter('Categoría',dashCatFilter)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-accent">
-                        <option value="">Todas las categorías</option>
-                        <template x-for="cat in odooCategories" :key="cat"><option :value="cat" x-text="cat"></option></template>
-                    </select>
-
-                    <!-- Mes pill -->
-                    <select x-model="dashMesFilter" @change="applyDashFilter('Mes',dashMesFilter)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-accent">
-                        <option value="">Todos los meses</option>
-                        <template x-for="m in allMeses" :key="m"><option :value="m" x-text="m"></option></template>
-                    </select>
-
-                    <!-- Active pill badge -->
-                    <template x-if="dashFilter">
-                        <div class="filter-pill">
-                            <span x-text="dashFilter.type+': '+dashFilter.value"></span>
-                            <button @click="clearDashFilter()" class="text-blue-300 hover:text-white ml-1">✕ Limpiar</button>
-                        </div>
-                    </template>
-                </div>
-
-                <!-- Charts -->
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                    <div class="glass p-4 rounded-xl border border-slate-700/50">
-                        <h3 class="text-sm font-bold text-center mb-3 text-slate-300">Gasto por Categoría <span class="text-slate-500 text-xs">(click para filtrar)</span></h3>
-                        <div class="relative" style="height:220px"><canvas id="catChart"></canvas></div>
-                    </div>
-                    <div class="glass p-4 rounded-xl border border-slate-700/50">
-                        <h3 class="text-sm font-bold text-center mb-3 text-slate-300">Gasto por Mes <span class="text-slate-500 text-xs">(click para filtrar)</span></h3>
-                        <div class="relative" style="height:220px"><canvas id="monthChart"></canvas></div>
-                    </div>
-                    <div class="glass p-4 rounded-xl border border-slate-700/50">
-                        <h3 class="text-sm font-bold text-center mb-3 text-slate-300">Top Proveedores <span class="text-slate-500 text-xs">(click para filtrar)</span></h3>
-                        <div class="relative" style="height:220px"><canvas id="provChart"></canvas></div>
-                    </div>
-                </div>
-
-                <!-- Summary Chips Panel -->
-                <div class="glass rounded-xl border border-slate-700/50 p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <h3 class="font-bold text-white">📊 <span x-text="dashFilter ? dashFilter.type+': '+dashFilter.value : 'Consolidado General'"></span></h3>
-                        <div class="flex gap-2 items-center">
-                            <span class="text-sm text-slate-400">Total: <b class="text-green-400" x-text="'$'+flexTableSum.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
-                            <button @click="downloadFlexTable()" class="px-4 py-1.5 bg-accent hover:bg-yellow-500 text-slate-900 font-bold rounded text-xs shadow shadow-accent/40">📥 Descargar CSV</button>
-                        </div>
-                    </div>
-
-                    <!-- Agrupar Flex Table -->
-                    <div class="flex gap-2 mb-3 flex-wrap">
-                        <span class="text-xs text-slate-500">Agrupar tabla por:</span>
-                        <template x-for="g in ['Ninguno','Categoria','Proveedor','Fecha']" :key="g">
-                            <button @click="dashGroupBy=g" class="chip" :class="dashGroupBy===g?'bg-accent text-slate-900':'chip-inactive'" x-text="g"></button>
-                        </template>
-                    </div>
-
-                    <!-- Flex Table -->
-                    <div class="overflow-y-auto custom-scrollbar rounded-lg" style="max-height:380px">
-                        <table class="w-full text-xs text-left">
-                            <thead class="sticky top-0 bg-slate-800/95 text-accent font-bold">
-                                <tr>
-                                    <th class="px-3 py-2 cursor-pointer hover:bg-slate-700/50" @click="sortFlexBy('Fecha')">Fecha <span x-show="flexSortCol==='Fecha'" x-text="flexSortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-2 cursor-pointer hover:bg-slate-700/50" @click="sortFlexBy('SKU')">SKU <span x-show="flexSortCol==='SKU'" x-text="flexSortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-2 cursor-pointer hover:bg-slate-700/50" @click="sortFlexBy('Producto')">Producto <span x-show="flexSortCol==='Producto'" x-text="flexSortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-2 cursor-pointer hover:bg-slate-700/50" @click="sortFlexBy('Categoria')">Categoría <span x-show="flexSortCol==='Categoria'" x-text="flexSortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-2 cursor-pointer hover:bg-slate-700/50" @click="sortFlexBy('Proveedor')">Proveedor <span x-show="flexSortCol==='Proveedor'" x-text="flexSortAsc?'🔼':'🔽'"></span></th>
-                                    <th class="px-3 py-2 cursor-pointer hover:bg-slate-700/50 text-right" @click="sortFlexBy('Subtotal_Total')">Subtotal <span x-show="flexSortCol==='Subtotal_Total'" x-text="flexSortAsc?'🔼':'🔽'"></span></th>
-                                </tr>
-                            </thead>
-                            <tbody class="divide-y divide-slate-700/40">
-                                <template x-for="(row,idx) in groupedFlexRows" :key="idx">
-                                    <template x-if="row._isGroup">
-                                        <tr class="group-header"><td colspan="6"><span x-text="row.label"></span> <span class="text-slate-400 font-normal ml-2">(<span x-text="row.count"></span> · $<span x-text="row.sum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>)</span></td></tr>
-                                    </template>
-                                    <template x-if="!row._isGroup">
-                                        <tr class="hover:bg-slate-700/30 text-slate-300">
-                                            <td class="px-3 py-1.5" x-text="row.Fecha"></td>
-                                            <td class="px-3 py-1.5 font-mono text-slate-400" x-text="row.SKU"></td>
-                                            <td class="px-3 py-1.5 truncate max-w-[200px]" x-text="row.Producto"></td>
-                                            <td class="px-3 py-1.5 text-green-300" x-text="row.Categoria"></td>
-                                            <td class="px-3 py-1.5 truncate max-w-[140px]" x-text="row.Proveedor"></td>
-                                            <td class="px-3 py-1.5 text-right font-bold text-white" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
-                                        </tr>
-                                    </template>
-                                </template>
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-
-        </div>
         </template>
-    </main>
+    </div>
+</nav>
 
-    <script>
-    document.addEventListener('alpine:init', () => {
-        Alpine.data('procurementApp', () => ({
-            // State
-            user: null, items: [], sessionAddedUUIDs: [],
-            searchQuery: '', filterCat: '', filterProv: '',
-            groupBy: 'Ninguno',
-            sortCol: 'Fecha', sortAsc: false,
-            currentTab: 'procesamiento',
-            dragOver: false, isSyncing: false, dirtyItems: new Set(),
-            // Dashboard
-            dashFilter: null, dashProvFilter: '', dashCatFilter: '', dashMesFilter: '',
-            dashGroupBy: 'Ninguno', flexSortCol: 'Subtotal_Total', flexSortAsc: false,
-            charts: {},
-            // Odoo category map (SKU -> category)
-            odooMap: {},
-            // Derived
-            odooCategories: [],
+<main class="p-5 max-w-[1500px] mx-auto space-y-4">
+    <div x-show="!user" class="glass p-10 rounded-2xl border border-accent/50 text-center mt-10">
+        <div class="text-5xl mb-4">🔒</div>
+        <h2 class="text-2xl font-bold mb-2">Acceso Restringido</h2>
+        <p class="text-slate-400">Inicia sesión con tu cuenta de Google autorizada.</p>
+    </div>
 
-            // ---- COMPUTED ----
-            get totalSpent() { return this.items.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
-            get uniqueInvoices() { return [...new Set(this.items.map(i=>i.UUID_Factura).filter(Boolean))]; },
-            get sessionDates() {
-                const dates = [...new Set(this.items.filter(i=>this.sessionAddedUUIDs.includes(i.UUID_Factura)).map(i=>i.Fecha))].filter(Boolean);
-                return dates.length ? dates.join(' | ') : 'Todo sincronizado ✔️';
-            },
-            get allProveedores() { return [...new Set(this.items.map(i=>i.Proveedor).filter(Boolean))].sort(); },
-            get allMeses() { return [...new Set(this.items.map(i=>(i.Fecha||'').substring(0,7)).filter(Boolean))].sort(); },
+    <template x-if="user">
+    <div>
+        <!-- TABS -->
+        <div class="flex gap-2 mb-4 bg-slate-800/60 p-1 rounded-xl w-fit">
+            <button @click="setTab('proc')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="tab==='proc'?'bg-primary text-white shadow-lg':'text-slate-400 hover:text-white'">📥 Procesamiento XML / CSV</button>
+            <button @click="setTab('dash')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="tab==='dash'?'bg-accent text-slate-900 shadow-lg':'text-slate-400 hover:text-white'">📊 Dashboard Analítico</button>
+        </div>
 
-            // Filtered + sorted items (for main table)
-            get filteredItems() {
-                let r = this.items;
-                const lq = this.searchQuery.toLowerCase();
-                if(lq) r = r.filter(i=> [i.Producto,i.SKU,i.Categoria,i.Proveedor].some(v=>v&&String(v).toLowerCase().includes(lq)));
-                if(this.filterCat === 'Sin Asignar') r = r.filter(i=>!i.Categoria||i.Categoria==='Sin Asignar');
-                else if(this.filterCat === '_ok') r = r.filter(i=>i.Categoria&&i.Categoria!=='Sin Asignar');
-                else if(this.filterCat) r = r.filter(i=>i.Categoria===this.filterCat);
-                if(this.filterProv) r = r.filter(i=>i.Proveedor===this.filterProv);
-                if(this.sortCol) {
-                    const numCols = ['Cantidad','Costo_Unitario','Subtotal_Total'];
-                    r = [...r].sort((a,b)=>{
-                        let va=a[this.sortCol]||'', vb=b[this.sortCol]||'';
-                        if(numCols.includes(this.sortCol)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
-                        else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
-                        return (va<vb?-1:va>vb?1:0)*(this.sortAsc?1:-1);
-                    });
-                }
-                return r;
-            },
+        <!-- ======= PROCESAMIENTO ======= -->
+        <div x-show="tab==='proc'" x-transition class="space-y-3">
+            <!-- Upload zone -->
+            <div class="glass p-5 rounded-2xl border border-dashed border-blue-500/40 text-center relative overflow-hidden transition-all"
+                 @dragover.prevent="drag=true" @dragleave.prevent="drag=false" @drop.prevent="onDrop($event)"
+                 :class="drag?'border-primary bg-primary/10':''">
+                <p class="font-bold mb-1 text-lg">Lanza tus Facturas Aquí 📄📦</p>
+                <p class="text-xs text-slate-400 mb-3">Arrastra archivos <b>.XML</b> (CFDI SAT) o <b>.CSV</b></p>
+                <label class="cursor-pointer px-5 py-2 bg-primary hover:bg-blue-500 rounded-lg font-bold text-sm inline-block">
+                    📥 Seleccionar Archivos
+                    <input type="file" multiple accept=".csv,.xml" class="hidden" @change="onFileSel">
+                </label>
+            </div>
 
-            get displayedRowCount() { return this.filteredItems.length; },
-            get filteredSubtotal() { return this.filteredItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
+            <!-- KPIs -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400">Gasto Histórico Nube</p><p class="text-2xl font-black" x-text="'$'+totalSpent.toLocaleString('en-US',{minimumFractionDigits:2})"></p></div>
+                <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400">Artículos</p><p class="text-2xl font-black text-blue-400" x-text="items.length"></p></div>
+                <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400">Facturas Únicas</p><p class="text-2xl font-black text-accent" x-text="uniqueUUIDs.length"></p></div>
+                <div class="glass p-4 rounded-xl"><p class="text-xs text-slate-400 mb-1">Fechas Sesión</p><p class="text-sm font-bold text-green-400" x-text="sessDatesTxt"></p></div>
+            </div>
 
-            // Grouped rows for main table
-            get groupedRows() {
-                if(this.groupBy === 'Ninguno') return this.filteredItems;
-                const key = this.groupBy;
-                const groups = {};
-                this.filteredItems.forEach(item => {
-                    const gk = item[key] || '(Sin valor)';
-                    if(!groups[gk]) groups[gk] = [];
-                    groups[gk].push(item);
-                });
-                const rows = [];
-                Object.keys(groups).sort().forEach(gk => {
-                    const gItems = groups[gk];
-                    const gSum = gItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0);
-                    rows.push({_isGroup:true, label:gk, count:gItems.length, sum:gSum});
-                    gItems.forEach(i=>rows.push(i));
-                });
-                return rows;
-            },
+            <!-- Filter bar -->
+            <div class="glass rounded-xl border border-slate-700/40 p-3 space-y-2">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wide shrink-0">Filtros</span>
+                    <input type="text" x-model="q" placeholder="🔍 SKU, descripción, categoría, proveedor..." class="bg-slate-900 border border-slate-600 rounded-lg px-3 py-1.5 text-xs focus:outline-none focus:border-primary flex-1 min-w-[220px]">
 
-            // Dashboard flex table
-            get flexTableItems() {
-                let r = this.items;
-                if(this.dashFilter) {
-                    if(this.dashFilter.type==='Categoría') r=r.filter(i=>i.Categoria===this.dashFilter.value);
-                    else if(this.dashFilter.type==='Proveedor') r=r.filter(i=>i.Proveedor===this.dashFilter.value);
-                    else if(this.dashFilter.type==='Mes') r=r.filter(i=>(i.Fecha||'').substring(0,7)===this.dashFilter.value);
-                }
-                const numCols=['Subtotal_Total'];
-                const col = this.flexSortCol;
-                return [...r].sort((a,b)=>{
-                    let va=a[col]||'', vb=b[col]||'';
-                    if(numCols.includes(col)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
-                    else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
-                    return (va<vb?-1:va>vb?1:0)*(this.flexSortAsc?1:-1);
-                });
-            },
-            get flexTableSum() { return this.flexTableItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
-            get groupedFlexRows() {
-                if(this.dashGroupBy==='Ninguno') return this.flexTableItems;
-                const key = this.dashGroupBy;
-                const groups = {};
-                this.flexTableItems.forEach(item=>{
-                    const gk=item[key]||'(Sin valor)';
-                    if(!groups[gk]) groups[gk]=[];
-                    groups[gk].push(item);
-                });
-                const rows=[];
-                Object.keys(groups).sort().forEach(gk=>{
-                    const gItems=groups[gk];
-                    const gSum=gItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0);
-                    rows.push({_isGroup:true,label:gk,count:gItems.length,sum:gSum});
-                    gItems.forEach(i=>rows.push(i));
-                });
-                return rows;
-            },
+                    <span class="text-xs text-slate-500 shrink-0">Mostrar:</span>
+                    <button @click="fCat=''"        class="chip" :class="fCat===''?'ca':'ci'">Todos</button>
+                    <button @click="fCat='SIN'"     class="chip" :class="fCat==='SIN'?'bg-red-600 text-white chip':'ci'">❌ Sin Asignar</button>
+                    <button @click="fCat='OK'"      class="chip" :class="fCat==='OK'?'bg-green-600 text-white chip':'ci'">✅ Clasificados</button>
 
-            // ---- INIT ----
-            init() {
-                // Load Odoo category map
-                fetch('odoo_cats.json')
-                    .then(r=>r.json())
-                    .then(data=>{
-                        this.odooMap = data;
-                        const uniqueCats = [...new Set(Object.values(data))].filter(c=>c&&c!=='Sin Familia').sort();
-                        this.odooCategories = uniqueCats;
-                    })
-                    .catch(()=>{ this.odooCategories=['Electricidad','Plomería','Herramienta Manual','Herramienta Eléctrica','Tornillería y Fijación','Cerrajería','Iluminación','Materiales Construcción','Seguridad']; });
+                    <span class="text-xs text-slate-500 shrink-0">Proveedor:</span>
+                    <select x-model="fProv" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-primary">
+                        <option value="">Todos</option>
+                        <template x-for="p in allProvs" :key="p"><option :value="p" x-text="p"></option></template>
+                    </select>
 
-                const timer = setInterval(()=>{
-                    if(window.fbAuth){
-                        clearInterval(timer);
-                        window.fbAuth.onAuthStateChanged(window.fbAuth.auth, user=>{
-                            this.user = user;
-                            if(user) this.loadFromCloud();
-                        });
-                    }
-                },50);
-            },
+                    <span class="text-xs text-slate-500 shrink-0">Agrupa:</span>
+                    <template x-for="g in ['Ninguno','Categoria','Proveedor','Fecha']" :key="g">
+                        <button @click="grpBy=g;collapsedGroups={}" class="chip" :class="grpBy===g?'ca':'ci'" x-text="g"></button>
+                    </template>
 
-            setTab(tab) {
-                this.currentTab = tab;
-                if(tab==='dashboard') setTimeout(()=>this.initCharts(),120);
-            },
+                    <button x-show="q||fCat||fProv" @click="q='';fCat='';fProv=''" class="text-xs text-red-400 hover:text-red-300 underline ml-1">limpiar</button>
+                </div>
+                <!-- Active pills -->
+                <div x-show="q||fCat||fProv" class="flex flex-wrap gap-2 pt-1">
+                    <div x-show="q" class="fpill">🔍 "<span x-text="q"></span>" <button @click="q=''" class="ml-1 hover:text-white">✕</button></div>
+                    <div x-show="fCat==='SIN'" class="fpill !border-red-500 !text-red-300">❌ Sin Asignar <button @click="fCat=''" class="ml-1 hover:text-white">✕</button></div>
+                    <div x-show="fCat==='OK'" class="fpill !border-green-500 !text-green-300">✅ Clasificados <button @click="fCat=''" class="ml-1 hover:text-white">✕</button></div>
+                    <div x-show="fProv" class="fpill">📦 <span x-text="fProv"></span> <button @click="fProv=''" class="ml-1 hover:text-white">✕</button></div>
+                </div>
+            </div>
 
-            async login() {
-                try { await window.fbAuth.signInWithPopup(window.fbAuth.auth, new window.fbAuth.GoogleAuthProvider()); }
-                catch(e){ console.error(e); }
-            },
-            async logout() { await window.fbAuth.signOut(window.fbAuth.auth); },
+            <!-- Count bar -->
+            <div class="flex justify-between text-xs text-slate-500 px-1">
+                <span>Mostrando <b class="text-slate-300" x-text="filteredItems.length"></b> de <b class="text-slate-300" x-text="items.length"></b></span>
+                <span>Subtotal: <b class="text-blue-300" x-text="'$'+filteredSubtotal.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
+            </div>
 
-            async loadFromCloud() {
-                const snap = await window.fbDb.getDocs(window.fbDb.collection(window.fbDb.db,'purchase_lines'));
-                const loaded=[];
-                snap.forEach(d=>loaded.push(d.data()));
-                this.items = loaded;
-            },
+            <!-- DATA TABLE -->
+            <div class="glass rounded-xl border border-slate-700/50 flex flex-col" style="height:560px">
+                <div class="overflow-y-auto cs flex-1">
+                    <table class="w-full text-left text-xs">
+                        <thead class="sticky top-0 bg-slate-800/95 backdrop-blur text-slate-300 z-10">
+                            <tr>
+                                <th class="px-3 py-3 rth sort-th" @click="sBy('SKU')">SKU <span x-show="sc==='SKU'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th" @click="sBy('Producto')">Descripción <span x-show="sc==='Producto'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th" @click="sBy('Categoria')">Categoría Odoo <span x-show="sc==='Categoria'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Cantidad')">Cant <span x-show="sc==='Cantidad'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Costo_Unitario')">Unit $ <span x-show="sc==='Costo_Unitario'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Subtotal_Total')">Subtotal <span x-show="sc==='Subtotal_Total'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th" @click="sBy('Proveedor')">Proveedor <span x-show="sc==='Proveedor'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th" @click="sBy('Fecha')">Fecha <span x-show="sc==='Fecha'" x-text="sa?'🔼':'🔽'"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/30">
+                            <template x-for="row in procRows" :key="row._id">
+                                <!-- GROUP HEADER ROW -->
+                                <tr x-show="row._grp" class="grp-hdr" @click="toggleGroup(row._grpKey)">
+                                    <td colspan="8">
+                                        <span x-text="collapsedGroups[row._grpKey]?'▶':'▼'"></span>
+                                        <span class="ml-2" x-text="row._grpLabel"></span>
+                                        <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> artículos &middot; $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>) — click para expandir/colapsar</span>
+                                    </td>
+                                </tr>
+                                <!-- DATA ROW -->
+                                <tr x-show="!row._grp && !collapsedGroups[row._grpKey]"
+                                    class="hover:bg-slate-700/25 transition-colors"
+                                    :class="sessUUIDs.includes(row.UUID_Factura)?'bg-blue-950/20':''">
+                                    <td class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
+                                    <td class="px-3 py-1.5 max-w-[180px] truncate" :title="row.Producto" x-text="row.Producto"></td>
+                                    <td class="px-3 py-1.5">
+                                        <select x-model="row.Categoria" @change="dirty(row)"
+                                            class="bg-slate-900 border rounded px-1.5 py-0.5 text-xs font-semibold w-36 focus:outline-none focus:border-primary"
+                                            :class="row.Categoria&&row.Categoria!=='Sin Asignar'?'border-green-700 text-green-400':'border-red-800 text-red-400'">
+                                            <option>Sin Asignar</option>
+                                            <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
+                                        </select>
+                                    </td>
+                                    <td class="px-3 py-1.5 text-right" x-text="row.Cantidad"></td>
+                                    <td class="px-3 py-1.5 text-right font-mono" x-text="'$'+(parseFloat(row.Costo_Unitario)||0).toFixed(2)"></td>
+                                    <td class="px-3 py-1.5 text-right font-mono font-bold text-blue-300" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
+                                    <td class="px-3 py-1.5 text-slate-500 max-w-[130px] truncate" :title="row.Proveedor" x-text="row.Proveedor"></td>
+                                    <td class="px-3 py-1.5 text-slate-500" x-text="row.Fecha"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-            sortBy(col) { this.sortCol===col ? this.sortAsc=!this.sortAsc : (this.sortCol=col, this.sortAsc=true); },
-            sortFlexBy(col) { this.flexSortCol===col ? this.flexSortAsc=!this.flexSortAsc : (this.flexSortCol=col, this.flexSortAsc=false); },
+        <!-- ======= DASHBOARD ======= -->
+        <div x-show="tab==='dash'" x-transition style="display:none" class="space-y-4">
 
-            markDirty(item) { item.ModifiedBy=this.user.email; this.dirtyItems.add(item); },
+            <!-- Dashboard filter bar -->
+            <div class="glass rounded-xl border border-slate-700/40 p-3 flex flex-wrap items-center gap-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-wide shrink-0">Filtros Dashboard:</span>
+                <select x-model="dProv" @change="applyDash('Proveedor',dProv)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-accent">
+                    <option value="">Todos los proveedores</option>
+                    <template x-for="p in allProvs" :key="p"><option :value="p" x-text="p"></option></template>
+                </select>
+                <select x-model="dCat" @change="applyDash('Categoría',dCat)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-accent">
+                    <option value="">Todas las categorías</option>
+                    <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
+                </select>
+                <select x-model="dMes" @change="applyDash('Mes',dMes)" class="bg-slate-900 border border-slate-600 rounded px-2 py-1 text-xs focus:outline-none focus:border-accent">
+                    <option value="">Todos los meses</option>
+                    <template x-for="m in allMeses" :key="m"><option :value="m" x-text="m"></option></template>
+                </select>
+                <div x-show="dFilt" class="fpill">
+                    <span x-text="dFilt?dFilt.t+': '+dFilt.v:''"></span>
+                    <button @click="clearDash()" class="ml-1 hover:text-white">✕ Limpiar</button>
+                </div>
+            </div>
 
-            // --- FILE HANDLING ---
-            async handleFileSelect(e) { await this.processFiles(e.target.files); },
-            async handleDrop(e) { this.dragOver=false; await this.processFiles(e.dataTransfer.files); },
+            <!-- Charts -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                <div class="glass p-4 rounded-xl border border-slate-700/50">
+                    <h3 class="text-sm font-bold text-center mb-2 text-slate-300">Gasto por Categoría <span class="text-slate-500 text-xs">(click → filtrar)</span></h3>
+                    <div style="height:220px"><canvas id="catChart"></canvas></div>
+                </div>
+                <div class="glass p-4 rounded-xl border border-slate-700/50">
+                    <h3 class="text-sm font-bold text-center mb-2 text-slate-300">Gasto por Mes <span class="text-slate-500 text-xs">(click → filtrar)</span></h3>
+                    <div style="height:220px"><canvas id="monthChart"></canvas></div>
+                </div>
+                <div class="glass p-4 rounded-xl border border-slate-700/50">
+                    <h3 class="text-sm font-bold text-center mb-2 text-slate-300">Top Proveedores <span class="text-slate-500 text-xs">(click → filtrar)</span></h3>
+                    <div style="height:220px"><canvas id="provChart"></canvas></div>
+                </div>
+            </div>
 
-            async processFiles(fileList) {
-                let n=0;
-                for(const file of fileList){
-                    if(file.name.toLowerCase().endsWith('.xml')){ await this.parseXML(file); n++; }
-                    else if(file.name.toLowerCase().endsWith('.csv')){ await this.parseCSV(file); n++; }
-                }
-                if(n) alert(`¡${n} archivo(s) procesados!\n\nRevisa las categorías auto-asignadas (verde = OK, rojo = Sin Asignar).\nEn cuanto termines, dale a ☁️ Sincronizar.`);
-            },
+            <!-- Flex / Drill-down table -->
+            <div class="glass rounded-xl border border-slate-700/50 p-4 space-y-3">
+                <div class="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                        <h3 class="font-bold text-white">📊 <span x-text="dFilt?dFilt.t+': '+dFilt.v:'Consolidado General'"></span></h3>
+                        <p class="text-xs text-slate-400">Total vista: <b class="text-green-400" x-text="'$'+dFlexSum.toLocaleString('en-US',{minimumFractionDigits:2})"></b>
+                            &nbsp;·&nbsp;<b class="text-slate-300" x-text="dFlexItems.length"></b> artículos</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs text-slate-500 shrink-0">Agrupar:</span>
+                        <template x-for="g in ['Ninguno','Categoria','Proveedor','Fecha']" :key="g">
+                            <button @click="dGrp=g;dCollapsed={}" class="chip" :class="dGrp===g?'bg-accent text-slate-900':'ci'" x-text="g"></button>
+                        </template>
+                        <button @click="dlFlex()" class="px-4 py-1.5 bg-accent hover:bg-yellow-500 text-slate-900 font-bold rounded text-xs shadow shadow-accent/40 shrink-0">📥 Descargar CSV</button>
+                    </div>
+                </div>
 
-            getCategoryForSKU(sku) {
-                // 1. Exact match vs Odoo master map
-                if(sku && this.odooMap[sku]) return this.odooMap[sku];
-                return null;
-            },
+                <!-- Flex sort + search -->
+                <div class="flex gap-2">
+                    <input type="text" x-model="dQ" placeholder="🔍 Buscar en vista..." class="bg-slate-900 border border-slate-600 rounded px-3 py-1.5 text-xs flex-1 focus:outline-none focus:border-accent">
+                </div>
 
-            async parseXML(file) {
-                const xml = new DOMParser().parseFromString(await file.text(),'text/xml');
-                const emisorNode = xml.getElementsByTagName('cfdi:Emisor')[0]||xml.getElementsByTagName('Emisor')[0];
-                const emisor = emisorNode ? emisorNode.getAttribute('Nombre')||'Desconocido' : 'Desconocido';
-                const timbre = xml.getElementsByTagName('tfd:TimbreFiscalDigital')[0];
-                const uuid = timbre?.getAttribute('UUID') || file.name.replace('.xml','');
-                const comp = xml.getElementsByTagName('cfdi:Comprobante')[0]||xml.getElementsByTagName('Comprobante')[0];
-                const fecha = comp?.getAttribute('Fecha')?.substring(0,10)||'Desconocida';
-                let conceptos = [...xml.getElementsByTagName('cfdi:Concepto')];
-                if(!conceptos.length) conceptos = [...xml.getElementsByTagName('Concepto')];
-                const rows = conceptos.map(c=>{
-                    const sku = c.getAttribute('NoIdentificacion')||'';
-                    const prod = c.getAttribute('Descripcion');
-                    // Priority: 1-Odoo master map by SKU, 2-Firebase history, 3-Sin Asignar
-                    const odooCat  = this.getCategoryForSKU(sku);
-                    const histCat  = this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===prod))?.Categoria;
-                    const cat = odooCat || histCat || 'Sin Asignar';
-                    return { Fecha:fecha, Proveedor:emisor, SKU:sku, Producto:prod,
-                        Cantidad:parseFloat(c.getAttribute('Cantidad')),
-                        Costo_Unitario:parseFloat(c.getAttribute('ValorUnitario')),
-                        Subtotal_Total:parseFloat(c.getAttribute('Importe')),
-                        UUID_Factura:uuid, Categoria:cat, ModifiedBy:this.user.email,
-                        FB_ID:(uuid+'_'+prod.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60) };
-                });
-                this.sessionAddedUUIDs.push(uuid);
-                this.pushNewRows(rows);
-            },
+                <!-- Flex table -->
+                <div class="overflow-y-auto cs rounded-lg" style="max-height:400px">
+                    <table class="w-full text-xs text-left">
+                        <thead class="sticky top-0 bg-slate-800/95 text-accent font-bold z-10">
+                            <tr>
+                                <th class="px-3 py-2 sort-th" @click="dsBy('Fecha')">Fecha <span x-show="dsc==='Fecha'" x-text="dsa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-2 sort-th" @click="dsBy('SKU')">SKU <span x-show="dsc==='SKU'" x-text="dsa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-2 sort-th" @click="dsBy('Producto')">Producto <span x-show="dsc==='Producto'" x-text="dsa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-2 sort-th" @click="dsBy('Categoria')">Categoría <span x-show="dsc==='Categoria'" x-text="dsa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-2 sort-th" @click="dsBy('Proveedor')">Proveedor <span x-show="dsc==='Proveedor'" x-text="dsa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-2 sort-th text-right" @click="dsBy('Subtotal_Total')">Subtotal <span x-show="dsc==='Subtotal_Total'" x-text="dsa?'🔼':'🔽'"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-700/30">
+                            <template x-for="row in dashRows" :key="row._id">
+                                <!-- Group header -->
+                                <tr x-show="row._grp" class="grp-hdr" @click="dCollapsed[row._grpKey]=!dCollapsed[row._grpKey]; $nextTick(()=>{})">
+                                    <td colspan="6">
+                                        <span x-text="dCollapsed[row._grpKey]?'▶':'▼'"></span>
+                                        <span class="ml-2" x-text="row._grpLabel"></span>
+                                        <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> · $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>)</span>
+                                    </td>
+                                </tr>
+                                <!-- Data row -->
+                                <tr x-show="!row._grp && !dCollapsed[row._grpKey]" class="hover:bg-slate-700/25 text-slate-300">
+                                    <td class="px-3 py-1.5" x-text="row.Fecha"></td>
+                                    <td class="px-3 py-1.5 font-mono text-slate-400" x-text="row.SKU"></td>
+                                    <td class="px-3 py-1.5 max-w-[200px] truncate" :title="row.Producto" x-text="row.Producto"></td>
+                                    <td class="px-3 py-1.5 text-green-300" x-text="row.Categoria"></td>
+                                    <td class="px-3 py-1.5 max-w-[140px] truncate" x-text="row.Proveedor"></td>
+                                    <td class="px-3 py-1.5 text-right font-bold text-white" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
+                                </tr>
+                            </template>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
 
-            parseCSV(file) {
-                return new Promise(resolve=>{
-                    Papa.parse(file,{ header:true, skipEmptyLines:true, complete:results=>{
-                        const rows = results.data.map(row=>{
-                            const sku = row.SKU||row.NoIdentificacion||'';
-                            const odooCat = this.getCategoryForSKU(sku);
-                            const histCat = this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===row.Producto))?.Categoria;
-                            const cat = odooCat||(row.Categoria!=='Sin Asignar'?row.Categoria:null)||histCat||'Sin Asignar';
-                            return {...row, SKU:sku, Categoria:cat, ModifiedBy:this.user.email,
-                                FB_ID:((row.UUID_Factura||'noUUID')+'_'+row.Producto.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60)};
-                        });
-                        if(rows[0]) this.sessionAddedUUIDs.push(rows[0].UUID_Factura);
-                        this.pushNewRows(rows);
-                        resolve();
-                    }});
-                });
-            },
+    </div>
+    </template>
+</main>
 
-            pushNewRows(rows) {
-                rows.forEach(nr=>{
-                    if(this.items.findIndex(i=>i.FB_ID===nr.FB_ID)===-1){
-                        this.items.unshift(nr);
-                        this.dirtyItems.add(nr);
-                    }
-                });
-            },
+<script>
+document.addEventListener('alpine:init',()=>{
+Alpine.data('app',()=>({
+    // Auth & data
+    user:null, items:[], sessUUIDs:[],
+    // Processing filters
+    q:'', fCat:'', fProv:'',
+    grpBy:'Ninguno', collapsedGroups:{},
+    sc:'Fecha', sa:false,
+    drag:false, syncing:false, dirtySet:new Set(),
+    // Dashboard
+    tab:'proc',
+    dFilt:null, dProv:'', dCat:'', dMes:'',
+    dGrp:'Ninguno', dCollapsed:{},
+    dsc:'Subtotal_Total', dsa:false, dQ:'',
+    // Odoo data
+    odooMap:{}, odooCats:[],
+    // Charts registry
+    charts:{},
 
-            async syncToCloud() {
-                if(!this.dirtyItems.size) return alert('Todo ya está sincronizado ✔️');
-                this.isSyncing=true;
-                try {
-                    const batch=window.fbDb.writeBatch(window.fbDb.db);
-                    let n=0;
-                    this.dirtyItems.forEach(item=>{
-                        if(!item.FB_ID) item.FB_ID=(item.UUID_Factura+'_'+item.Producto.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60);
-                        batch.set(window.fbDb.doc(window.fbDb.db,'purchase_lines',item.FB_ID), Alpine.raw(item));
-                        n++;
-                    });
-                    await batch.commit();
-                    this.dirtyItems.clear();
-                    this.sessionAddedUUIDs=[];
-                    alert(`¡Sincronización exitosa! ${n} registros guardados en la nube.`);
-                    if(this.currentTab==='dashboard') this.initCharts();
-                } catch(e){ console.error(e); alert('Error al sincronizar. Ver consola.'); }
-                this.isSyncing=false;
-            },
+    // ---------- COMPUTED ----------
+    get totalSpent(){ return this.items.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
+    get uniqueUUIDs(){ return [...new Set(this.items.map(i=>i.UUID_Factura).filter(Boolean))]; },
+    get sessDatesTxt(){
+        const d=[...new Set(this.items.filter(i=>this.sessUUIDs.includes(i.UUID_Factura)).map(i=>i.Fecha))].filter(Boolean);
+        return d.length?d.join(' | '):'Todo sincronizado ✔️';
+    },
+    get allProvs(){ return [...new Set(this.items.map(i=>i.Proveedor).filter(Boolean))].sort(); },
+    get allMeses(){ return [...new Set(this.items.map(i=>(i.Fecha||'').substring(0,7)).filter(Boolean))].sort(); },
 
-            exportOdooPOs() {
-                const target = this.sessionAddedUUIDs.length ? this.items.filter(i=>this.sessionAddedUUIDs.includes(i.UUID_Factura)) : this.items;
-                const byInv={};
-                target.forEach(i=>{ if(!byInv[i.UUID_Factura]) byInv[i.UUID_Factura]=[]; byInv[i.UUID_Factura].push({'default_code':i.SKU,'Nombre':i.Producto,'Cantidad':i.Cantidad,'Precio_Unitario':i.Costo_Unitario,'Categoria_Odoo':i.Categoria,'Proveedor':i.Proveedor}); });
-                const uuids=Object.keys(byInv);
-                if(!uuids.length) return alert('No hay datos para exportar.');
-                uuids.forEach((uuid,idx)=>setTimeout(()=>{
-                    const blob=new Blob([Papa.unparse(byInv[uuid])],{type:'text/csv;charset=utf-8;'});
-                    const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-                    a.download=`Odoo_PO_${byInv[uuid][0].Proveedor.replace(/[^a-zA-Z]/g,'_').substring(0,12)}_${uuid.substring(0,8)}.csv`;
-                    a.click();
-                },idx*500));
-            },
+    // Filtered + sorted items
+    get filteredItems(){
+        let r=this.items;
+        const lq=this.q.toLowerCase();
+        if(lq) r=r.filter(i=>[i.Producto,i.SKU,i.Categoria,i.Proveedor].some(v=>v&&String(v).toLowerCase().includes(lq)));
+        if(this.fCat==='SIN') r=r.filter(i=>!i.Categoria||i.Categoria==='Sin Asignar');
+        else if(this.fCat==='OK') r=r.filter(i=>i.Categoria&&i.Categoria!=='Sin Asignar');
+        if(this.fProv) r=r.filter(i=>i.Proveedor===this.fProv);
+        const num=['Cantidad','Costo_Unitario','Subtotal_Total'];
+        const col=this.sc;
+        return[...r].sort((a,b)=>{
+            let va=a[col]||'',vb=b[col]||'';
+            if(num.includes(col)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
+            else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
+            return(va<vb?-1:va>vb?1:0)*(this.sa?1:-1);
+        });
+    },
+    get filteredSubtotal(){ return this.filteredItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
 
-            downloadFlexTable() {
-                if(!this.flexTableItems.length) return;
-                const data=this.flexTableItems.map(i=>({Fecha:i.Fecha,Proveedor:i.Proveedor,SKU:i.SKU,Producto:i.Producto,Categoria:i.Categoria,Cantidad:i.Cantidad,Costo_Unitario:i.Costo_Unitario,Subtotal_Total:i.Subtotal_Total}));
-                const blob=new Blob([Papa.unparse(data)],{type:'text/csv;charset=utf-8;'});
-                const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
-                const safe=this.dashFilter?this.dashFilter.value.replace(/[^a-zA-Z0-9]/g,'_'):'General';
-                a.download=`HerraMax_Reporte_${safe}.csv`; a.click();
-            },
+    // Grouped rows for processing table
+    get procRows(){
+        const items = this.filteredItems;
+        if(this.grpBy==='Ninguno'){
+            // Flat list, each row gets _id and _grpKey='' so x-show="!collapsedGroups['']" is always true
+            return items.map((item,i)=>({...item, _grp:false, _grpKey:'', _id:'r_'+i}));
+        }
+        const key=this.grpBy;
+        const groups={};
+        items.forEach(item=>{
+            const gk=item[key]||'(Sin valor)';
+            if(!groups[gk]) groups[gk]=[];
+            groups[gk].push(item);
+        });
+        const rows=[];
+        Object.keys(groups).sort().forEach(gk=>{
+            const gItems=groups[gk];
+            const gSum=gItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0);
+            rows.push({_grp:true,_grpKey:gk,_grpLabel:gk,_grpCount:gItems.length,_grpSum:gSum,_id:'g_'+gk});
+            gItems.forEach((item,i)=>rows.push({...item,_grp:false,_grpKey:gk,_id:'d_'+gk+'_'+i}));
+        });
+        return rows;
+    },
 
-            applyDashFilter(type,value) { this.dashFilter = value ? {type,value} : null; this.initCharts(); },
-            clearDashFilter() { this.dashFilter=null; this.dashProvFilter=''; this.dashCatFilter=''; this.dashMesFilter=''; this.initCharts(); },
+    toggleGroup(key){ this.collapsedGroups={...this.collapsedGroups,[key]:!this.collapsedGroups[key]}; },
 
-            // ---- CHARTS ----
-            initCharts() {
-                const palette=['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f43f5e','#84cc16','#fb923c','#a855f7'];
-                // Cat
-                const catAgg=this.agg('Categoria');
-                this.mkChart('catChart','Categoría',catAgg,'doughnut',palette);
-                // Month
-                const mesAgg={}; this.items.forEach(i=>{ const m=(i.Fecha||'').substring(0,7); mesAgg[m]=(mesAgg[m]||0)+parseFloat(i.Subtotal_Total||0); });
-                const sortedMes=Object.keys(mesAgg).sort().reduce((o,k)=>{o[k]=mesAgg[k];return o;},{});
-                this.mkChart('monthChart','Mes',sortedMes,'bar',['#10b981']);
-                // Prov
-                const provAgg=this.agg('Proveedor');
-                const topProv=Object.entries(provAgg).sort((a,b)=>b[1]-a[1]).slice(0,6).reduce((o,[k,v])=>{o[k]=v;return o;},{});
-                this.mkChart('provChart','Proveedor',topProv,'bar',palette);
-            },
+    // Dashboard flex items
+    get dFlexItems(){
+        let r=this.items;
+        if(this.dFilt){
+            if(this.dFilt.t==='Proveedor') r=r.filter(i=>i.Proveedor===this.dFilt.v);
+            else if(this.dFilt.t==='Categoría') r=r.filter(i=>i.Categoria===this.dFilt.v);
+            else if(this.dFilt.t==='Mes') r=r.filter(i=>(i.Fecha||'').substring(0,7)===this.dFilt.v);
+        }
+        const lq=this.dQ.toLowerCase();
+        if(lq) r=r.filter(i=>[i.Producto,i.SKU,i.Categoria,i.Proveedor].some(v=>v&&String(v).toLowerCase().includes(lq)));
+        const num=['Subtotal_Total'];
+        const col=this.dsc;
+        return[...r].sort((a,b)=>{
+            let va=a[col]||'',vb=b[col]||'';
+            if(num.includes(col)){va=parseFloat(va)||0;vb=parseFloat(vb)||0;}
+            else{va=String(va).toLowerCase();vb=String(vb).toLowerCase();}
+            return(va<vb?-1:va>vb?1:0)*(this.dsa?1:-1);
+        });
+    },
+    get dFlexSum(){ return this.dFlexItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
+    get dashRows(){
+        const items=this.dFlexItems;
+        if(this.dGrp==='Ninguno') return items.map((item,i)=>({...item,_grp:false,_grpKey:'',_id:'dr_'+i}));
+        const key=this.dGrp;
+        const groups={};
+        items.forEach(item=>{ const gk=item[key]||'(Sin valor)'; if(!groups[gk]) groups[gk]=[]; groups[gk].push(item); });
+        const rows=[];
+        Object.keys(groups).sort().forEach(gk=>{
+            const gItems=groups[gk];
+            const gSum=gItems.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0);
+            rows.push({_grp:true,_grpKey:gk,_grpLabel:gk,_grpCount:gItems.length,_grpSum:gSum,_id:'dg_'+gk});
+            gItems.forEach((item,i)=>rows.push({...item,_grp:false,_grpKey:gk,_id:'dd_'+gk+'_'+i}));
+        });
+        return rows;
+    },
 
-            agg(field) { const m={}; this.items.forEach(i=>{ m[i[field]]=(m[i[field]]||0)+parseFloat(i.Subtotal_Total||0); }); return m; },
-
-            mkChart(id,filterType,dataMap,type,colors) {
-                const ctx=document.getElementById(id); if(!ctx) return;
-                if(this.charts[id]) this.charts[id].destroy();
-                this.charts[id]=new Chart(ctx.getContext('2d'),{
-                    type,
-                    data:{ labels:Object.keys(dataMap), datasets:[{ data:Object.values(dataMap), backgroundColor:type==='doughnut'?colors:colors[0], borderColor:type==='bar'?'transparent':undefined, tension:0.3 }] },
-                    options:{
-                        responsive:true, maintainAspectRatio:false,
-                        plugins:{ legend:{ display:type==='doughnut', position:'bottom', labels:{color:'#cbd5e1',boxWidth:12,font:{size:10}} } },
-                        scales:type!=='doughnut'?{ x:{ticks:{color:'#94a3b8',maxRotation:30,font:{size:9}}}, y:{ticks:{color:'#94a3b8'}} }:{},
-                        onClick:(e,els)=>{ if(els.length){ const lbl=this.charts[id].data.labels[els[0].index]; this.applyDashFilter(filterType,lbl); } }
-                    }
-                });
+    // ---------- INIT ----------
+    init(){
+        fetch('./odoo_cats.json').then(r=>r.json()).then(data=>{
+            this.odooMap=data;
+            this.odooCats=[...new Set(Object.values(data))].filter(c=>c&&c!=='Sin Familia').sort();
+        }).catch(()=>{ this.odooCats=['Electricidad','Plomería','Herramienta Manual','Herramienta Eléctrica','Tornillería y Fijación','Cerrajería','Iluminación','Materiales Construcción','Seguridad']; });
+        const t=setInterval(()=>{
+            if(window.fbA){ clearInterval(t);
+                window.fbA.onAuthStateChanged(window.fbA.auth,u=>{ this.user=u; if(u) this.loadCloud(); });
             }
-        }));
-    });
-    </script>
+        },50);
+    },
+
+    setTab(t){ this.tab=t; if(t==='dash') setTimeout(()=>this.initCharts(),150); },
+
+    async login(){ try{ await window.fbA.signInWithPopup(window.fbA.auth,new window.fbA.GoogleAuthProvider()); }catch(e){console.error(e);} },
+    async logout(){ await window.fbA.signOut(window.fbA.auth); },
+
+    async loadCloud(){
+        const snap=await window.fbD.getDocs(window.fbD.collection(window.fbD.db,'purchase_lines'));
+        const loaded=[]; snap.forEach(d=>loaded.push(d.data())); this.items=loaded;
+    },
+
+    // Sort
+    sBy(col){ this.sc===col?this.sa=!this.sa:(this.sc=col,this.sa=true); },
+    dsBy(col){ this.dsc===col?this.dsa=!this.dsa:(this.dsc=col,this.dsa=false); },
+
+    dirty(item){ item.ModifiedBy=this.user.email; this.dirtySet.add(item); },
+
+    // Files
+    async onFileSel(e){ await this.procFiles(e.target.files); },
+    async onDrop(e){ this.drag=false; await this.procFiles(e.dataTransfer.files); },
+    async procFiles(list){
+        let n=0;
+        for(const f of list){
+            if(f.name.toLowerCase().endsWith('.xml')){ await this.parseXML(f); n++; }
+            else if(f.name.toLowerCase().endsWith('.csv')){ await this.parseCSV(f); n++; }
+        }
+        if(n) alert(`¡${n} archivo(s) procesados!\n\nRevisa las categorías (verde=OK, rojo=Sin Asignar). Al terminar, presiona ☁️ Sincronizar.`);
+    },
+
+    getCat(sku){
+        if(sku&&this.odooMap[sku]) return this.odooMap[sku]==='Sin Familia'?null:this.odooMap[sku];
+        return null;
+    },
+
+    async parseXML(file){
+        const xml=new DOMParser().parseFromString(await file.text(),'text/xml');
+        const emisorN=xml.getElementsByTagName('cfdi:Emisor')[0]||xml.getElementsByTagName('Emisor')[0];
+        const emisor=emisorN?emisorN.getAttribute('Nombre')||'Desconocido':'Desconocido';
+        const timbre=xml.getElementsByTagName('tfd:TimbreFiscalDigital')[0];
+        const uuid=timbre?.getAttribute('UUID')||file.name.replace('.xml','');
+        const comp=xml.getElementsByTagName('cfdi:Comprobante')[0]||xml.getElementsByTagName('Comprobante')[0];
+        const fecha=comp?.getAttribute('Fecha')?.substring(0,10)||'Desconocida';
+        let cs=[...xml.getElementsByTagName('cfdi:Concepto')];
+        if(!cs.length) cs=[...xml.getElementsByTagName('Concepto')];
+        const rows=cs.map(c=>{
+            const sku=c.getAttribute('NoIdentificacion')||'';
+            const prod=c.getAttribute('Descripcion');
+            const cat=this.getCat(sku)||this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===prod))?.Categoria||'Sin Asignar';
+            return{Fecha:fecha,Proveedor:emisor,SKU:sku,Producto:prod,
+                Cantidad:parseFloat(c.getAttribute('Cantidad')),
+                Costo_Unitario:parseFloat(c.getAttribute('ValorUnitario')),
+                Subtotal_Total:parseFloat(c.getAttribute('Importe')),
+                UUID_Factura:uuid,Categoria:cat,ModifiedBy:this.user.email,
+                FB_ID:(uuid+'_'+prod.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60)};
+        });
+        this.sessUUIDs.push(uuid);
+        this.pushRows(rows);
+    },
+
+    parseCSV(file){
+        return new Promise(res=>{
+            Papa.parse(file,{header:true,skipEmptyLines:true,complete:r=>{
+                const rows=r.data.map(row=>{
+                    const sku=row.SKU||row.NoIdentificacion||'';
+                    const cat=this.getCat(sku)||(row.Categoria&&row.Categoria!=='Sin Asignar'?row.Categoria:null)||this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===row.Producto))?.Categoria||'Sin Asignar';
+                    return{...row,SKU:sku,Categoria:cat,ModifiedBy:this.user.email,
+                        FB_ID:((row.UUID_Factura||'x')+'_'+row.Producto.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60)};
+                });
+                if(rows[0]) this.sessUUIDs.push(rows[0].UUID_Factura);
+                this.pushRows(rows); res();
+            }});
+        });
+    },
+
+    pushRows(rows){ rows.forEach(nr=>{ if(this.items.findIndex(i=>i.FB_ID===nr.FB_ID)===-1){ this.items.unshift(nr); this.dirtySet.add(nr); } }); },
+
+    async syncToCloud(){
+        if(!this.dirtySet.size) return alert('Todo ya está sincronizado ✔️');
+        this.syncing=true;
+        try{
+            const b=window.fbD.writeBatch(window.fbD.db); let n=0;
+            this.dirtySet.forEach(item=>{
+                if(!item.FB_ID) item.FB_ID=(item.UUID_Factura+'_'+item.Producto.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60);
+                b.set(window.fbD.doc(window.fbD.db,'purchase_lines',item.FB_ID),Alpine.raw(item)); n++;
+            });
+            await b.commit(); this.dirtySet.clear(); this.sessUUIDs=[];
+            alert(`¡Sincronización exitosa! ${n} registros guardados.`);
+            if(this.tab==='dash') this.initCharts();
+        }catch(e){ console.error(e); alert('Error. Ver consola.'); }
+        this.syncing=false;
+    },
+
+    exportOdooPOs(){
+        const src=this.sessUUIDs.length?this.items.filter(i=>this.sessUUIDs.includes(i.UUID_Factura)):this.items;
+        const by={};
+        src.forEach(i=>{ if(!by[i.UUID_Factura]) by[i.UUID_Factura]=[]; by[i.UUID_Factura].push({default_code:i.SKU,Nombre:i.Producto,Cantidad:i.Cantidad,Precio_Unitario:i.Costo_Unitario,Categoria_Odoo:i.Categoria,Proveedor:i.Proveedor}); });
+        const uu=Object.keys(by);
+        if(!uu.length) return alert('No hay datos en sesión.');
+        uu.forEach((uuid,idx)=>setTimeout(()=>{
+            const b=new Blob([Papa.unparse(by[uuid])],{type:'text/csv;charset=utf-8;'});
+            const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+            a.download=`Odoo_PO_${by[uuid][0].Proveedor.replace(/[^a-zA-Z]/g,'_').substring(0,12)}_${uuid.substring(0,8)}.csv`;
+            a.click();
+        },idx*500));
+    },
+
+    applyDash(t,v){ this.dFilt=v?{t,v}:null; this.initCharts(); },
+    clearDash(){ this.dFilt=null; this.dProv=''; this.dCat=''; this.dMes=''; this.initCharts(); },
+
+    dlFlex(){
+        if(!this.dFlexItems.length) return;
+        const data=this.dFlexItems.map(i=>({Fecha:i.Fecha,Proveedor:i.Proveedor,SKU:i.SKU,Producto:i.Producto,Categoria:i.Categoria,Cantidad:i.Cantidad,Costo_Unitario:i.Costo_Unitario,Subtotal_Total:i.Subtotal_Total}));
+        const b=new Blob([Papa.unparse(data)],{type:'text/csv;charset=utf-8;'});
+        const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+        const safe=this.dFilt?this.dFilt.v.replace(/[^a-zA-Z0-9]/g,'_'):'General';
+        a.download=`HerraMax_${safe}.csv`; a.click();
+    },
+
+    // Charts
+    initCharts(){
+        const pal=['#3b82f6','#f59e0b','#10b981','#ef4444','#8b5cf6','#06b6d4','#f43f5e','#84cc16','#fb923c','#a855f7'];
+        const agg=f=>{const m={};this.items.forEach(i=>{m[i[f]]=(m[i[f]]||0)+parseFloat(i.Subtotal_Total||0);});return m;};
+        this.mkChart('catChart','Categoría',agg('Categoria'),'doughnut',pal);
+        const mAgg={};
+        this.items.forEach(i=>{const m=(i.Fecha||'').substring(0,7);mAgg[m]=(mAgg[m]||0)+parseFloat(i.Subtotal_Total||0);});
+        const sm=Object.keys(mAgg).sort().reduce((o,k)=>{o[k]=mAgg[k];return o;},{});
+        this.mkChart('monthChart','Mes',sm,'bar',['#10b981']);
+        const pAgg=agg('Proveedor');
+        const tp=Object.entries(pAgg).sort((a,b)=>b[1]-a[1]).slice(0,6).reduce((o,[k,v])=>{o[k]=v;return o;},{});
+        this.mkChart('provChart','Proveedor',tp,'bar',pal);
+    },
+
+    mkChart(id,ft,dataMap,type,colors){
+        const ctx=document.getElementById(id); if(!ctx) return;
+        if(this.charts[id]) this.charts[id].destroy();
+        this.charts[id]=new Chart(ctx.getContext('2d'),{
+            type,
+            data:{labels:Object.keys(dataMap),datasets:[{data:Object.values(dataMap),backgroundColor:type==='doughnut'?colors:colors[0],borderColor:'transparent',tension:0.3}]},
+            options:{responsive:true,maintainAspectRatio:false,
+                plugins:{legend:{display:type==='doughnut',position:'bottom',labels:{color:'#cbd5e1',boxWidth:12,font:{size:10}}}},
+                scales:type!=='doughnut'?{x:{ticks:{color:'#94a3b8',maxRotation:30,font:{size:9}}},y:{ticks:{color:'#94a3b8'}}}:{},
+                onClick:(e,els)=>{ if(els.length){ const lbl=this.charts[id].data.labels[els[0].index]; this.applyDash(ft,lbl); } }
+            }
+        });
+    }
+}));
+});
+</script>
 </body>
 </html>
