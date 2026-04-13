@@ -150,21 +150,21 @@
                         </thead>
                         <tbody class="divide-y divide-slate-700/30">
                             <template x-for="row in procRows" :key="row._id">
-                                <!-- GROUP HEADER ROW -->
-                                <tr x-show="row._grp" class="grp-hdr" @click="toggleGroup(row._grpKey)">
-                                    <td colspan="8">
+                                <!-- SINGLE TR: group header OR data row -->
+                                <tr
+                                    x-show="row._grp || !collapsedGroups[row._grpKey]"
+                                    :class="row._grp ? 'grp-hdr' : (sessUUIDs.includes(row.UUID_Factura)?'bg-blue-950/20 hover:bg-slate-700/25 transition-colors':'hover:bg-slate-700/25 transition-colors')"
+                                    @click="row._grp && toggleGroup(row._grpKey)">
+                                    <!-- Group header cell -->
+                                    <td x-show="row._grp" colspan="8">
                                         <span x-text="collapsedGroups[row._grpKey]?'▶':'▼'"></span>
                                         <span class="ml-2" x-text="row._grpLabel"></span>
                                         <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> artículos &middot; $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>) — click para expandir/colapsar</span>
                                     </td>
-                                </tr>
-                                <!-- DATA ROW -->
-                                <tr x-show="!row._grp && !collapsedGroups[row._grpKey]"
-                                    class="hover:bg-slate-700/25 transition-colors"
-                                    :class="sessUUIDs.includes(row.UUID_Factura)?'bg-blue-950/20':''">
-                                    <td class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
-                                    <td class="px-3 py-1.5 max-w-[180px] truncate" :title="row.Producto" x-text="row.Producto"></td>
-                                    <td class="px-3 py-1.5">
+                                    <!-- Data cells -->
+                                    <td x-show="!row._grp" class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 max-w-[180px] truncate" :title="row.Producto" x-text="row.Producto"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5">
                                         <select x-model="row.Categoria" @change="dirty(row)"
                                             class="bg-slate-900 border rounded px-1.5 py-0.5 text-xs font-semibold w-36 focus:outline-none focus:border-primary"
                                             :class="row.Categoria&&row.Categoria!=='Sin Asignar'?'border-green-700 text-green-400':'border-red-800 text-red-400'">
@@ -172,11 +172,11 @@
                                             <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
                                         </select>
                                     </td>
-                                    <td class="px-3 py-1.5 text-right" x-text="row.Cantidad"></td>
-                                    <td class="px-3 py-1.5 text-right font-mono" x-text="'$'+(parseFloat(row.Costo_Unitario)||0).toFixed(2)"></td>
-                                    <td class="px-3 py-1.5 text-right font-mono font-bold text-blue-300" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
-                                    <td class="px-3 py-1.5 text-slate-500 max-w-[130px] truncate" :title="row.Proveedor" x-text="row.Proveedor"></td>
-                                    <td class="px-3 py-1.5 text-slate-500" x-text="row.Fecha"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-right" x-text="row.Cantidad"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-right font-mono" x-text="'$'+(parseFloat(row.Costo_Unitario)||0).toFixed(2)"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-right font-mono font-bold text-blue-300" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500 max-w-[130px] truncate" :title="row.Proveedor" x-text="row.Proveedor"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500" x-text="row.Fecha"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -262,22 +262,24 @@
                         </thead>
                         <tbody class="divide-y divide-slate-700/30">
                             <template x-for="row in dashRows" :key="row._id">
-                                <!-- Group header -->
-                                <tr x-show="row._grp" class="grp-hdr" @click="dCollapsed[row._grpKey]=!dCollapsed[row._grpKey]; $nextTick(()=>{})">
-                                    <td colspan="6">
+                                <!-- SINGLE TR: group header OR data row -->
+                                <tr
+                                    x-show="row._grp || !dCollapsed[row._grpKey]"
+                                    :class="row._grp ? 'grp-hdr' : 'hover:bg-slate-700/25 text-slate-300'"
+                                    @click="row._grp && toggleDash(row._grpKey)">
+                                    <!-- Group header cell -->
+                                    <td x-show="row._grp" colspan="6">
                                         <span x-text="dCollapsed[row._grpKey]?'▶':'▼'"></span>
                                         <span class="ml-2" x-text="row._grpLabel"></span>
                                         <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> · $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>)</span>
                                     </td>
-                                </tr>
-                                <!-- Data row -->
-                                <tr x-show="!row._grp && !dCollapsed[row._grpKey]" class="hover:bg-slate-700/25 text-slate-300">
-                                    <td class="px-3 py-1.5" x-text="row.Fecha"></td>
-                                    <td class="px-3 py-1.5 font-mono text-slate-400" x-text="row.SKU"></td>
-                                    <td class="px-3 py-1.5 max-w-[200px] truncate" :title="row.Producto" x-text="row.Producto"></td>
-                                    <td class="px-3 py-1.5 text-green-300" x-text="row.Categoria"></td>
-                                    <td class="px-3 py-1.5 max-w-[140px] truncate" x-text="row.Proveedor"></td>
-                                    <td class="px-3 py-1.5 text-right font-bold text-white" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
+                                    <!-- Data cells -->
+                                    <td x-show="!row._grp" class="px-3 py-1.5" x-text="row.Fecha"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 font-mono text-slate-400" x-text="row.SKU"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 max-w-[200px] truncate" :title="row.Producto" x-text="row.Producto"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-green-300" x-text="row.Categoria"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 max-w-[140px] truncate" x-text="row.Proveedor"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-right font-bold text-white" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
                                 </tr>
                             </template>
                         </tbody>
@@ -364,6 +366,7 @@ Alpine.data('app',()=>({
     },
 
     toggleGroup(key){ this.collapsedGroups={...this.collapsedGroups,[key]:!this.collapsedGroups[key]}; },
+    toggleDash(key){ this.dCollapsed={...this.dCollapsed,[key]:!this.dCollapsed[key]}; },
 
     // Dashboard flex items
     get dFlexItems(){
