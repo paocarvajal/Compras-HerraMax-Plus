@@ -51,8 +51,7 @@
             projectId: "compras-herramax",
             storageBucket: "compras-herramax.firebasestorage.app",
             messagingSenderId: "558573642669",
-            appId: "1:558573642669:web:f967def7deb883fa16b724",
-            measurementId: "G-WZP1DXCWS0"
+            appId: "1:558573642669:web:f967def7deb883fa16b724"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -72,10 +71,8 @@
         </div>
         
         <div class="flex items-center gap-4">
-            <!-- Login State -->
             <template x-if="!user">
                 <button @click="login()" class="px-4 py-2 bg-white text-slate-800 hover:bg-slate-200 rounded-lg text-sm font-semibold transition-all flex items-center gap-2">
-                    <svg class="w-4 h-4" viewBox="0 0 24 24"><path fill="currentColor" d="M12.545,10.239v3.821h5.445c-0.712,2.315-2.647,3.972-5.445,3.972c-3.332,0-6.033-2.701-6.033-6.032s2.701-6.032,6.033-6.032c1.498,0,2.866,0.549,3.921,1.453l2.814-2.814C17.503,2.988,15.139,2,12.545,2C7.021,2,2.543,6.477,2.543,12s4.478,10,10.002,10c8.396,0,10.249-7.85,9.426-11.748L12.545,10.239z"/></svg>
                     Ingresar con Google
                 </button>
             </template>
@@ -101,31 +98,35 @@
     <!-- Main Content -->
     <main class="p-6 max-w-7xl mx-auto space-y-6">
         
-        <!-- Auth Warning -->
         <div x-show="!user" class="glass p-8 rounded-2xl border border-accent/50 text-center">
             <h2 class="text-2xl font-bold mb-2">🔒 Acceso Restringido</h2>
-            <p class="text-slate-400 mb-4">Inicia sesión con tu cuenta de Google Autorizada para ver y guardar el histórico de compras de HerraMax Plus.</p>
+            <p class="text-slate-400 mb-4">Inicia sesión con tu cuenta de Google Autorizada para ver y procesar facturas en HerraMax.</p>
         </div>
 
         <template x-if="user">
             <div>
-                <!-- Extractor / Uploader -->
-                <div class="glass p-6 rounded-2xl border border-slate-700/50 flex flex-col justify-center text-center transition-all mb-6"
+                <!-- MUlti-file uploader -->
+                <div class="glass p-6 rounded-2xl border border-blue-500/30 flex flex-col justify-center text-center transition-all mb-6 relative overflow-hidden"
                      @dragover.prevent="dragOver = true" 
                      @dragleave.prevent="dragOver = false" 
                      @drop.prevent="handleDrop($event)"
                      :class="dragOver ? 'border-primary bg-primary/10' : ''">
                     
-                    <h2 class="text-xl font-bold mb-2">Añadir Nuevas Facturas</h2>
-                    <p class="text-sm text-slate-400 mb-4">Arrastra el nuevo CSV aquí para adjuntarlo al Master Cloud.</p>
-                    <label class="cursor-pointer px-4 py-2 bg-primary hover:bg-blue-500 rounded-lg font-semibold transition-colors mx-auto inline-block text-sm">
-                        <span>📥 Seleccionar Archivo Local</span>
-                        <input type="file" accept=".csv" class="hidden" @change="handleFileSelect">
+                    <div class="absolute -right-10 -top-10 w-32 h-32 bg-primary/20 blur-3xl rounded-full"></div>
+                    
+                    <h2 class="text-xl font-bold mb-2 relative z-10 flex items-center justify-center gap-2">
+                        <span>Lanza tus Facturas Aquí</span> 📄📦
+                    </h2>
+                    <p class="text-sm text-slate-400 mb-4 relative z-10">
+                        Arrastra el maestro en <b>.CSV</b> o directamente TODOS tus <b>archivos .XML (Facturas SAT)</b>. <br>El Dashboard los absorberá automáticamente.
+                    </p>
+                    <label class="cursor-pointer px-4 py-2 bg-primary hover:bg-blue-500 rounded-lg font-semibold transition-colors mx-auto inline-block text-sm relative z-10">
+                        <span>📥 Seleccionar Archivos (CSV o XML)</span>
+                        <input type="file" multiple accept=".csv, .xml" class="hidden" @change="handleFileSelect">
                     </label>
                 </div>
 
                 <div x-show="items.length > 0">
-                    <!-- KPI Dashboard -->
                     <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
                         <div class="glass p-5 rounded-xl border border-slate-700/50">
                             <p class="text-sm text-slate-400 font-semibold mb-1">Gasto Histórico Nube</p>
@@ -145,7 +146,6 @@
                         </div>
                     </div>
 
-                    <!-- Analysis Space -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                         <!-- Data Table -->
                         <div class="lg:col-span-2 glass rounded-xl border border-slate-700/50 flex flex-col h-[600px]">
@@ -160,12 +160,12 @@
                                             <th class="px-4 py-3 font-medium">Producto</th>
                                             <th class="px-4 py-3 font-medium">Categoría Odoo</th>
                                             <th class="px-4 py-3 font-medium text-right">Cant</th>
-                                            <th class="px-4 py-3 font-medium text-right">Subtotal</th>
-                                            <th class="px-4 py-3 font-medium text-center">Clasificado por</th>
+                                            <th class="px-4 py-3 font-medium text-right" title="Monto Pagado a Proveedor">Subtotal ($)</th>
+                                            <th class="px-4 py-3 font-medium text-center">Modificado</th>
                                         </tr>
                                     </thead>
                                     <tbody class="divide-y divide-slate-700/50">
-                                        <template x-for="(item, index) in filteredItems" :key="index">
+                                        <template x-for="(item, index) in filteredItems" :key="item.FB_ID || index">
                                             <tr class="hover:bg-slate-700/30 transition-colors">
                                                 <td class="px-4 py-2 truncate max-w-[200px]" :title="item.Producto" x-text="item.Producto"></td>
                                                 <td class="px-4 py-2">
@@ -182,8 +182,8 @@
                                                     </select>
                                                 </td>
                                                 <td class="px-4 py-2 text-right" x-text="item.Cantidad"></td>
-                                                <td class="px-4 py-2 text-right font-medium text-blue-300" x-text="'$' + parseFloat(item.Subtotal_Total).toFixed(2)"></td>
-                                                <td class="px-4 py-2 text-center text-xs text-slate-500" x-text="item.ModifiedBy || 'N/A'"></td>
+                                                <td class="px-4 py-2 text-right font-medium text-blue-300" x-text="(parseFloat(item.Subtotal_Total) || 0).toFixed(2)"></td>
+                                                <td class="px-4 py-2 text-center text-xs text-slate-500" x-text="item.ModifiedBy || 'Auto'"></td>
                                             </tr>
                                         </template>
                                     </tbody>
@@ -191,7 +191,7 @@
                             </div>
                         </div>
 
-                        <!-- Charts Area -->
+                        <!-- Charts -->
                         <div class="glass rounded-xl border border-slate-700/50 p-4 h-[600px] flex flex-col">
                             <h3 class="font-semibold text-lg mb-4">📊 Gasto por Categoría</h3>
                             <div class="flex-1 relative">
@@ -207,13 +207,8 @@
     <script>
         document.addEventListener('alpine:init', () => {
             Alpine.data('procurementApp', () => ({
-                user: null,
-                items: [],
-                searchQuery: '',
-                chartInstance: null,
-                dragOver: false,
-                isSyncing: false,
-                dirtyItems: new Set(),
+                user: null, items: [], searchQuery: '', chartInstance: null,
+                dragOver: false, isSyncing: false, dirtyItems: new Set(),
 
                 get totalSpent() { return this.items.reduce((sum, item) => sum + (parseFloat(item.Subtotal_Total) || 0), 0); },
                 get uniqueInvoices() { return [...new Set(this.items.map(i => i.UUID_Factura).filter(Boolean))]; },
@@ -230,7 +225,6 @@
                 },
 
                 init() {
-                    // Esperar a que el script de módulo inyecte window.fbAuth
                     const checkFirebase = setInterval(() => {
                         if (window.fbAuth) {
                             clearInterval(checkFirebase);
@@ -245,12 +239,9 @@
                 async login() {
                     const provider = new window.fbAuth.GoogleAuthProvider();
                     try { await window.fbAuth.signInWithPopup(window.fbAuth.auth, provider); } 
-                    catch (error) { console.error("Login failed", error); }
+                    catch (error) { console.error(error); }
                 },
-
-                async logout() {
-                    await window.fbAuth.signOut(window.fbAuth.auth);
-                },
+                async logout() { await window.fbAuth.signOut(window.fbAuth.auth); },
 
                 async loadFromCloud() {
                     const querySnapshot = await window.fbDb.getDocs(window.fbDb.collection(window.fbDb.db, "purchase_lines"));
@@ -265,44 +256,97 @@
                     this.dirtyItems.add(item);
                 },
 
-                handleFileSelect(event) {
-                    const file = event.target.files[0];
-                    if (file) this.parseCSV(file);
-                },
-                handleDrop(event) {
+                async handleFileSelect(event) { await this.processFiles(event.target.files); },
+                async handleDrop(event) {
                     this.dragOver = false;
-                    if (event.dataTransfer.files.length > 0) this.parseCSV(event.dataTransfer.files[0]);
+                    await this.processFiles(event.dataTransfer.files);
+                },
+
+                async processFiles(fileList) {
+                    let filesProcessed = 0;
+                    for (let i = 0; i < fileList.length; i++) {
+                        const file = fileList[i];
+                        if (file.name.toLowerCase().endsWith('.xml')) {
+                            await this.parseXML(file);
+                            filesProcessed++;
+                        } else if (file.name.toLowerCase().endsWith('.csv')) {
+                            await this.parseCSV(file);
+                            filesProcessed++;
+                        }
+                    }
+                    if(filesProcessed > 0) {
+                        this.updateCharts();
+                        alert(`¡Absorbidas y procesadas con éxito! Recuerda darle al botón "☁️ Sincronizar Nube" para asegurar todo en la base de datos central.`);
+                    }
+                },
+
+                // Lógica súper nativa para digerir un XML de Factura CFDI
+                async parseXML(file) {
+                    const text = await file.text();
+                    const parser = new DOMParser();
+                    const xml = parser.parseFromString(text, "text/xml");
+                    
+                    let emisorNombre = "Desconocido";
+                    const emisorNode = xml.getElementsByTagName("cfdi:Emisor")[0] || xml.getElementsByTagName("Emisor")[0];
+                    if(emisorNode) emisorNombre = emisorNode.getAttribute("Nombre") || "Desconocido";
+                    
+                    let uuid = file.name.replace('.xml', '');
+                    const timbreNode = xml.getElementsByTagName("tfd:TimbreFiscalDigital")[0];
+                    if(timbreNode && timbreNode.getAttribute("UUID")) uuid = timbreNode.getAttribute("UUID");
+                    
+                    let fecha = "Desconocida";
+                    const comprobanteNode = xml.getElementsByTagName("cfdi:Comprobante")[0] || xml.getElementsByTagName("Comprobante")[0];
+                    if(comprobanteNode && comprobanteNode.getAttribute("Fecha")) fecha = comprobanteNode.getAttribute("Fecha").substring(0, 10);
+                    
+                    let conceptos = Array.from(xml.getElementsByTagName("cfdi:Concepto"));
+                    if(conceptos.length === 0) conceptos = Array.from(xml.getElementsByTagName("Concepto"));
+                    
+                    const newRows = conceptos.map(c => ({
+                        Fecha: fecha,
+                        Proveedor: emisorNombre,
+                        Producto: c.getAttribute("Descripcion"),
+                        Cantidad: parseFloat(c.getAttribute("Cantidad")),
+                        Costo_Unitario: parseFloat(c.getAttribute("ValorUnitario")),
+                        Subtotal_Total: parseFloat(c.getAttribute("Importe")),
+                        UUID_Factura: uuid,
+                        Categoria: 'Sin Asignar',
+                        ModifiedBy: this.user.email,
+                        FB_ID: (uuid + "_" + c.getAttribute("Descripcion").replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
+                    }));
+                    
+                    this.pushNewRows(newRows);
                 },
 
                 parseCSV(file) {
-                    Papa.parse(file, {
-                        header: true, skipEmptyLines: true,
-                        complete: (results) => {
-                            const newRows = results.data.map(row => ({
-                                ...row,
-                                Categoria: row.Categoria || 'Sin Asignar',
-                                ModifiedBy: this.user.email,
-                                // ID local unico para Firebase: (UUID + Limpiar Producto)
-                                FB_ID: (row.UUID_Factura + "_" + row.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
-                            }));
-                            
-                            // Combinar o actualizar con lo que existe
-                            newRows.forEach(nr => {
-                                const exists = this.items.findIndex(i => i.FB_ID === nr.FB_ID);
-                                if(exists === -1) {
-                                    this.items.push(nr);
-                                    this.dirtyItems.add(nr);
-                                }
-                            });
-                            
-                            this.updateCharts();
-                            alert("Archivo cargado localmente. Recuerda presionar 'Sincronizar' para guardar en la nube.");
+                    return new Promise((resolve) => {
+                        Papa.parse(file, {
+                            header: true, skipEmptyLines: true,
+                            complete: (results) => {
+                                const newRows = results.data.map(row => ({
+                                    ...row,
+                                    Categoria: row.Categoria || 'Sin Asignar',
+                                    ModifiedBy: this.user.email,
+                                    FB_ID: (row.UUID_Factura + "_" + row.Producto.replace(/[^a-zA-Z0-9]/g, "")).substring(0,60)
+                                }));
+                                this.pushNewRows(newRows);
+                                resolve();
+                            }
+                        });
+                    });
+                },
+
+                pushNewRows(rows) {
+                    rows.forEach(nr => {
+                        const exists = this.items.findIndex(i => i.FB_ID === nr.FB_ID);
+                        if(exists === -1) {
+                            this.items.unshift(nr); // Añadir arriba
+                            this.dirtyItems.add(nr);
                         }
                     });
                 },
 
                 async syncToCloud() {
-                    if (this.dirtyItems.size === 0) return alert("Todo está sincronizado.");
+                    if (this.dirtyItems.size === 0) return alert("Todo está sincronizado con la nube de HerraMax.");
                     this.isSyncing = true;
                     
                     try {
@@ -320,8 +364,8 @@
                         this.dirtyItems.clear();
                         alert(`¡Sincronización exitosa! ${count} artículos actualizados en la nube.`);
                     } catch (e) {
-                        console.error("Error sincronizando", e);
-                        alert("Error al sincronizar con Firebase.");
+                        console.error(e);
+                        alert("Error al sincronizar.");
                     }
                     this.isSyncing = false;
                 },
@@ -330,10 +374,8 @@
                     const ctx = document.getElementById('categoryChart');
                     if(!ctx) return;
                     if(this.chartInstance) this.chartInstance.destroy();
-                    
                     this.chartInstance = new Chart(ctx.getContext('2d'), {
-                        type: 'doughnut',
-                        data: this.getChartData(),
+                        type: 'doughnut', data: this.getChartData(),
                         options: {
                             responsive: true, maintainAspectRatio: false,
                             plugins: { legend: { position: 'bottom', labels: { color: '#cbd5e1' } } },
@@ -341,44 +383,25 @@
                         }
                     });
                 },
-                
                 getChartData() {
                     const catTotals = {};
-                    this.items.forEach(i => {
-                        catTotals[i.Categoria] = (catTotals[i.Categoria] || 0) + parseFloat(i.Subtotal_Total);
-                    });
-                    
+                    this.items.forEach(i => { catTotals[i.Categoria] = (catTotals[i.Categoria] || 0) + parseFloat(i.Subtotal_Total); });
                     return {
                         labels: Object.keys(catTotals),
-                        datasets: [{
-                            data: Object.values(catTotals),
-                            backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6', '#64748b', '#ef4444', '#14b8a6', '#f43f5e']
-                        }]
+                        datasets: [{ data: Object.values(catTotals), backgroundColor: ['#3b82f6', '#f59e0b', '#10b981', '#6366f1', '#ec4899', '#8b5cf6', '#64748b', '#ef4444', '#14b8a6', '#f43f5e'] }]
                     };
                 },
-                
-                updateCharts() {
-                    if(this.chartInstance) {
-                        this.chartInstance.data = this.getChartData();
-                        this.chartInstance.update();
-                    } else {
-                        this.initChart();
-                    }
-                },
+                updateCharts() { this.chartInstance ? (this.chartInstance.data = this.getChartData(), this.chartInstance.update()) : this.initChart(); },
 
                 exportOdooPOs() {
                     const byInvoice = {};
                     this.items.forEach(i => {
                         if(!byInvoice[i.UUID_Factura]) byInvoice[i.UUID_Factura] = [];
                         byInvoice[i.UUID_Factura].push({
-                            'Nombre': i.Producto,
-                            'Cantidad': i.Cantidad,
-                            'Precio_Unitario': i.Costo_Unitario,
-                            'Categoria_Odoo': i.Categoria,
-                            'Info_Proveedor': i.Proveedor
+                            'Nombre': i.Producto, 'Cantidad': i.Cantidad, 'Precio_Unitario': i.Costo_Unitario,
+                            'Categoria_Odoo': i.Categoria, 'Info_Proveedor': i.Proveedor
                         });
                     });
-
                     Object.keys(byInvoice).forEach((uuid, idx) => {
                         setTimeout(() => {
                             const csv = Papa.unparse(byInvoice[uuid]);
@@ -396,4 +419,3 @@
     </script>
 </body>
 </html>
-<!-- trigger gh pages -->
