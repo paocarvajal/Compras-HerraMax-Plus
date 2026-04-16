@@ -140,6 +140,7 @@
                             <tr>
                                 <th class="px-3 py-3 rth sort-th" @click="sBy('SKU')">SKU <span x-show="sc==='SKU'" x-text="sa?'🔼':'🔽'"></span></th>
                                 <th class="px-3 py-3 rth sort-th" @click="sBy('Producto')">Descripción <span x-show="sc==='Producto'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-3 py-3 rth sort-th" @click="sBy('TipoOdoo')">Tipo <span x-show="sc==='TipoOdoo'" x-text="sa?'🔼':'🔽'"></span></th>
                                 <th class="px-3 py-3 rth sort-th" @click="sBy('Categoria')">Categoría Odoo <span x-show="sc==='Categoria'" x-text="sa?'🔼':'🔽'"></span></th>
                                 <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Cantidad')">Cant <span x-show="sc==='Cantidad'" x-text="sa?'🔼':'🔽'"></span></th>
                                 <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Costo_Unitario')">Unit $ <span x-show="sc==='Costo_Unitario'" x-text="sa?'🔼':'🔽'"></span></th>
@@ -156,7 +157,7 @@
                                     :class="row._grp ? 'grp-hdr' : (sessUUIDs.includes(row.UUID_Factura)?'bg-blue-950/20 hover:bg-slate-700/25 transition-colors':'hover:bg-slate-700/25 transition-colors')"
                                     @click="row._grp && toggleGroup(row._grpKey)">
                                     <!-- Group header cell -->
-                                    <td x-show="row._grp" colspan="8">
+                                    <td x-show="row._grp" colspan="9">
                                         <span x-text="collapsedGroups[row._grpKey]?'▶':'▼'"></span>
                                         <span class="ml-2" x-text="row._grpLabel"></span>
                                         <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> artículos &middot; $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>) — click para expandir/colapsar</span>
@@ -164,6 +165,13 @@
                                     <!-- Data cells -->
                                     <td x-show="!row._grp" class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
                                     <td x-show="!row._grp" class="px-3 py-1.5 max-w-[180px] truncate" :title="row.Producto" x-text="row.Producto"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5">
+                                        <select x-model="row.TipoOdoo" @change="dirty(row)" class="bg-slate-900 border border-slate-600 rounded px-1 text-xs w-24 focus:border-primary text-slate-300">
+                                            <option value="Almacenable">Almacenable</option>
+                                            <option value="Servicio">Servicio/Gasto</option>
+                                            <option value="Regalo">Regalo/Promo</option>
+                                        </select>
+                                    </td>
                                     <td x-show="!row._grp" class="px-3 py-1.5">
                                         <select x-model="row.Categoria" @change="dirty(row)"
                                             class="bg-slate-900 border rounded px-1.5 py-0.5 text-xs font-semibold w-36 focus:outline-none focus:border-primary"
@@ -508,7 +516,7 @@ Alpine.data('app',()=>({
                 Cantidad:parseFloat(c.getAttribute('Cantidad')),
                 Costo_Unitario:parseFloat(c.getAttribute('ValorUnitario')),
                 Subtotal_Total:parseFloat(c.getAttribute('Importe')),
-                UUID_Factura:uuid,Categoria:cat,ModifiedBy:this.user.email,
+                UUID_Factura:uuid,Categoria:cat,TipoOdoo:'Almacenable',ModifiedBy:this.user.email,
                 FB_ID:(uuid+'_'+lineIdx+'_'+prod.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60)};
         });
         this.sessUUIDs.push(uuid);
@@ -521,7 +529,7 @@ Alpine.data('app',()=>({
                 const rows=r.data.map((row,lineIdx)=>{
                     const sku=row.SKU||row.NoIdentificacion||'';
                     const cat=this.getCat(sku)||this.getCatByName(row.Producto)||(row.Categoria&&row.Categoria!=='Sin Asignar'?row.Categoria:null)||this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===row.Producto))?.Categoria||'Sin Asignar';
-                    return{...row,SKU:sku,Categoria:cat,ModifiedBy:this.user.email,
+                    return{...row,SKU:sku,Categoria:cat,TipoOdoo:row.TipoOdoo||'Almacenable',ModifiedBy:this.user.email,
                         FB_ID:((row.UUID_Factura||'x')+'_'+lineIdx+'_'+row.Producto.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60)};
                 });
                 if(rows[0]) this.sessUUIDs.push(rows[0].UUID_Factura);
@@ -551,7 +559,7 @@ Alpine.data('app',()=>({
     exportOdooPOs(){
         const src=this.sessUUIDs.length?this.items.filter(i=>this.sessUUIDs.includes(i.UUID_Factura)):this.items;
         const by={};
-        src.forEach(i=>{ if(!by[i.UUID_Factura]) by[i.UUID_Factura]=[]; by[i.UUID_Factura].push({default_code:i.SKU,Nombre:i.Producto,Cantidad:i.Cantidad,Precio_Unitario:i.Costo_Unitario,Categoria_Odoo:i.Categoria,Proveedor:i.Proveedor}); });
+        src.forEach(i=>{ if(!by[i.UUID_Factura]) by[i.UUID_Factura]=[]; by[i.UUID_Factura].push({default_code:i.SKU,Nombre:i.Producto,Cantidad:i.Cantidad,Precio_Unitario:i.Costo_Unitario,Categoria_Odoo:i.Categoria,Tipo_Config:i.TipoOdoo,Proveedor:i.Proveedor}); });
         const uu=Object.keys(by);
         if(!uu.length) return alert('No hay datos en sesión.');
         uu.forEach((uuid,idx)=>setTimeout(()=>{
