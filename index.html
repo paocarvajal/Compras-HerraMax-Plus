@@ -425,8 +425,23 @@ Alpine.data('app',()=>({
     async logout(){ await window.fbA.signOut(window.fbA.auth); },
 
     async loadCloud(){
+        // 1. Cargar rápido del caché local si existe
+        try {
+            const local = localStorage.getItem('hm_cache_invoices');
+            if(local) this.items = JSON.parse(local);
+        } catch(e){}
+        
+        // 2. Traer la verdad absoluta de Firebase
         const snap=await window.fbD.getDocs(window.fbD.collection(window.fbD.db,'purchase_lines'));
-        const loaded=[]; snap.forEach(d=>loaded.push(d.data())); this.items=loaded;
+        const loaded=[]; snap.forEach(d=>loaded.push(d.data())); 
+        this.items=loaded;
+        
+        // 3. Guardar en local nuevamente
+        this.saveLocal();
+    },
+
+    saveLocal() {
+        try { localStorage.setItem('hm_cache_invoices', JSON.stringify(this.items)); } catch(e){}
     },
 
     // Sort
@@ -459,10 +474,18 @@ Alpine.data('app',()=>({
         const STOP=new Set(['de','la','el','los','las','con','sin','para','por','en','a','y','o','un','una','del','al','pza','pzas','pcs','pz','rollo','caja','pieza','piezas','metro','metros']);
         const words=normed.split(' ').filter(w=>w.length>=2&&!/^\d+(\.\d+)?$/.test(w)&&!STOP.has(w));
         if(!words.length) return null;
-        // Intentar match de 3, 2 y 1 palabra(s)
+        // 1. Intentar match de 3, 2 y 1 palabra(s) exacto en nombres aprendidos
         for(let n=Math.min(3,words.length);n>=1;n--){
             const key=words.slice(0,n).join(' ');
             if(this.odooName[key]) return this.odooName[key];
+        }
+        // 2. MAGIA: Búsqueda borrosa por palabra clave en Categorías Odoo
+        if (this.odooCats && this.odooCats.length) {
+            const firstWord = words[0]; // Ej. "taquete"
+            for (let truperCat of this.odooCats) {
+                const normedCat = truperCat.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+                if (normedCat.includes(firstWord)) return truperCat;
+            }
         }
         return null;
     },
@@ -507,7 +530,7 @@ Alpine.data('app',()=>({
         });
     },
 
-    pushRows(rows){ rows.forEach(nr=>{ if(this.items.findIndex(i=>i.FB_ID===nr.FB_ID)===-1){ this.items.unshift(nr); this.dirtySet.add(nr); } }); },
+    pushRows(rows){ rows.forEach(nr=>{ if(this.items.findIndex(i=>i.FB_ID===nr.FB_ID)===-1){ this.items.unshift(nr); this.dirtySet.add(nr); } }); this.saveLocal(); },
 
     async syncToCloud(){
         if(!this.dirtySet.size) return alert('Todo ya está sincronizado ✔️');
