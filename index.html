@@ -128,14 +128,26 @@
             </div>
 
             <!-- Count bar -->
-            <div class="flex justify-between text-xs text-slate-500 px-1">
-                <span>Mostrando <b class="text-slate-300" x-text="filteredItems.length"></b> de <b class="text-slate-300" x-text="items.length"></b></span>
-                <span>Subtotal: <b class="text-blue-300" x-text="'$'+filteredSubtotal.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
+            <div class="flex justify-between items-center text-xs text-slate-500 px-1">
+                <div class="flex items-center gap-3">
+                    <span>Mostrando <b class="text-slate-300" x-text="filteredItems.length"></b> registros</span>
+                    <span>Subtotal: <b class="text-blue-300" x-text="'$'+filteredSubtotal.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
+                </div>
+                <div>
+                    <button @click="showHistory = !showHistory" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded">
+                        <span x-text="showHistory ? '👁️ Ocultar Histórico' : '📂 Cargar Histórico Nube'"></span>
+                    </button>
+                </div>
             </div>
 
             <!-- DATA TABLE -->
             <div class="glass rounded-xl border border-slate-700/50 flex flex-col" style="height:560px">
-                <div class="overflow-y-auto cs flex-1">
+                <div x-show="!showHistory && sessUUIDs.length === 0" class="flex-1 flex flex-col items-center justify-center text-slate-500">
+                    <div class="text-4xl mb-3">🧹</div>
+                    <p class="font-bold">Mesa de Trabajo Limpia</p>
+                    <p class="text-xs">Arrastra facturas para comenzar o haz clic en "Cargar Histórico Nube".</p>
+                </div>
+                <div x-show="showHistory || sessUUIDs.length > 0" class="overflow-y-auto cs flex-1">
                     <table class="w-full text-left text-xs">
                         <thead class="sticky top-0 bg-slate-800/95 backdrop-blur text-slate-300 z-10">
                             <tr>
@@ -314,7 +326,7 @@
 document.addEventListener('alpine:init',()=>{
 Alpine.data('app',()=>({
     // Auth & data
-    user:null, items:[], sessUUIDs:[],
+    user:null, items:[], sessUUIDs:[], showHistory:false,
     // Processing filters
     q:'', fCat:'', fProv:'',
     grpBy:'Ninguno', collapsedGroups:{},
@@ -343,6 +355,7 @@ Alpine.data('app',()=>({
     // Filtered + sorted items
     get filteredItems(){
         let r=this.items;
+        if(!this.showHistory) r=r.filter(i=>this.sessUUIDs.includes(i.UUID_Factura));
         const lq=this.q.toLowerCase();
         if(lq) r=r.filter(i=>[i.Producto,i.SKU,i.Categoria,i.Proveedor].some(v=>v&&String(v).toLowerCase().includes(lq)));
         if(this.fCat==='SIN') r=r.filter(i=>!i.Categoria||i.Categoria==='Sin Asignar');
@@ -443,11 +456,12 @@ Alpine.data('app',()=>({
     async logout(){ await window.fbA.signOut(window.fbA.auth); },
 
     async clearSess() {
-        if(!confirm('¿Estás segura de Limpiar la Mesa? \n\nSe borrarán de tu pantalla las facturas XML que acabas de subir y que no has sincronizado. (No afectará tu Bóveda Histórica de Firebase)')) return;
+        if(!confirm('¿Estás segura de Limpiar la Mesa? \n\nSe borrarán de tu pantalla las facturas XML que acabas de subir.')) return;
         this.dirtySet.clear();
         this.sessUUIDs = [];
-        this.items = []; 
-        await this.loadCloud();
+        this.showHistory = false;
+        // No borramos this.items ni recargamos la nube para que no haya parpadeo.
+        // Al poner showHistory = false y sessUUIDs vacío, la mesa se verá limpia automáticamente.
     },
 
     applyBulkType(groupValue, tipo) {
