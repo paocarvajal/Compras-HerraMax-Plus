@@ -383,11 +383,10 @@
                     </table>
                 </div>
             </div>
-            </div>
         </div>
 
         <!-- ======= LABELS GENERATOR ======= -->
-        <div x-show="tab==='labels'" x-transition style="display:none" class="space-y-4">
+        <div x-show="tab==='labels'" x-transition class="space-y-4">
             <div class="glass p-5 rounded-2xl border border-green-500/30 flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                     <h3 class="text-xl font-bold text-green-400">🏷️ Generador de Etiquetas</h3>
@@ -409,7 +408,7 @@
 
             <!-- Labels Preview -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                <template x-for="item in filteredItems" :key="item._id">
+                <template x-for="item in filteredItems" :key="item.FB_ID">
                     <div class="bg-white text-black p-3 rounded shadow-sm flex flex-col justify-between border-2 border-slate-200 aspect-[5/3] overflow-hidden">
                         <div>
                             <div class="flex justify-between items-start mb-1">
@@ -427,7 +426,7 @@
             </div>
         </div>
 
-    </div>
+    </div> <!-- closes div at line 69 -->
     </template>
 </main>
 
