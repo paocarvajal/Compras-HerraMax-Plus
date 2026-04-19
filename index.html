@@ -406,10 +406,47 @@
                 </button>
             </div>
 
+            <!-- Labels Control Table -->
+            <div class="glass rounded-xl border border-slate-700/50 overflow-hidden">
+                <table class="w-full text-left text-[11px]">
+                    <thead class="bg-slate-800 text-slate-400 uppercase tracking-wider">
+                        <tr>
+                            <th class="px-3 py-2 w-10"></th>
+                            <th class="px-3 py-2">SKU</th>
+                            <th class="px-3 py-2">Descripción</th>
+                            <th class="px-3 py-2">Categoría</th>
+                            <th class="px-3 py-2 text-center">Factura</th>
+                            <th class="px-3 py-2 text-center">Etiquetas</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-700/30">
+                        <template x-for="item in filteredItems" :key="item.FB_ID">
+                            <tr class="hover:bg-slate-700/20 transition-colors" :class="!item._print ? 'opacity-50' : ''">
+                                <td class="px-3 py-1.5 text-center">
+                                    <input type="checkbox" x-model="item._print" class="accent-green-500">
+                                </td>
+                                <td class="px-3 py-1.5 font-bold text-accent" x-text="item.SKU"></td>
+                                <td class="px-3 py-1.5 text-slate-300" x-text="item.Producto"></td>
+                                <td class="px-3 py-1.5">
+                                    <select x-model="item.Categoria" @change="dirty(item)" class="bg-slate-900 border border-slate-700 rounded px-1 text-[10px] w-full text-slate-400">
+                                        <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
+                                    </select>
+                                </td>
+                                <td class="px-3 py-1.5 text-center font-mono text-slate-500" x-text="item.Cantidad"></td>
+                                <td class="px-3 py-1.5 text-center">
+                                    <input type="number" x-model.number="item._labelQty" class="bg-slate-900 border border-slate-700 rounded w-12 text-center text-xs text-green-400 font-bold" min="0">
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </div>
+
             <!-- Labels Preview -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                <template x-for="item in filteredItems" :key="item.FB_ID">
-                    <div class="bg-white text-black p-3 rounded shadow-sm flex flex-col justify-between border-2 border-slate-200 aspect-[5/3] overflow-hidden">
+                <template x-for="item in filteredItems.filter(i => i._print && i._labelQty > 0)" :key="item.FB_ID">
+                    <div class="bg-white text-black p-3 rounded shadow-sm flex flex-col justify-between border-2 border-slate-200 aspect-[5/3] overflow-hidden relative">
+                         <div class="absolute top-0 left-0 bg-green-600 text-[8px] text-white px-1 font-bold" x-text="'x'+item._labelQty"></div>
                         <div>
                             <div class="flex justify-between items-start mb-1">
                                 <span class="text-[14px] font-black leading-none" x-text="item.SKU || '---'"></span>
@@ -631,6 +668,7 @@ Alpine.data('app',()=>({
     printLabels() {
         const win = window.open('', '_blank');
         const store = this.labelStore;
+        const toPrint = this.filteredItems.filter(i => i._print && i._labelQty > 0);
         const html = `
             <!DOCTYPE html>
             <html>
@@ -653,8 +691,8 @@ Alpine.data('app',()=>({
             </head>
             <body onload="window.print();">
                 <div class="labels-container">
-                    ${this.filteredItems.map(item => {
-                        const count = Math.max(1, Math.floor(parseFloat(item.Cantidad) || 1));
+                    ${toPrint.map(item => {
+                        const count = parseInt(item._labelQty) || 1;
                         let labels = '';
                         for(let i=0; i<count; i++) {
                             labels += `
@@ -771,9 +809,10 @@ Alpine.data('app',()=>({
         const rows=cs.map((c,lineIdx)=>{
             const sku=c.getAttribute('NoIdentificacion')||'';
             const prod=c.getAttribute('Descripcion');
+            const cant=parseFloat(c.getAttribute('Cantidad'));
             const cat=this.getCat(sku)||this.getCatByName(prod)||this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===prod))?.Categoria||'Sin Asignar';
             return{Fecha:fecha, Fecha_Timbrado:fechaTimbrado, Proveedor:emisor,SKU:sku,Producto:prod,
-                Cantidad:parseFloat(c.getAttribute('Cantidad')),
+                Cantidad:cant, _labelQty:cant, _print:true,
                 Costo_Unitario:parseFloat(c.getAttribute('ValorUnitario')),
                 Subtotal_Total:parseFloat(c.getAttribute('Importe')),
                 UUID_Factura:uuid,Categoria:cat,TipoOdoo:'Almacenable',ModifiedBy:this.user.email,
