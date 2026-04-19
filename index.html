@@ -13,7 +13,7 @@
     <style>
         body{font-family:'Inter',sans-serif;background:#0f172a;color:#f8fafc}
         .glass{background:rgba(30,41,59,0.7);backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,0.1)}
-        .cs::-webkit-scrollbar{width:6px} .cs::-webkit-scrollbar-track{background:#1e293b} .cs::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}
+        .cs::-webkit-scrollbar{width:6px;height:6px} .cs::-webkit-scrollbar-track{background:#1e293b} .cs::-webkit-scrollbar-thumb{background:#475569;border-radius:4px}
         .rth{resize:horizontal;overflow:auto;position:relative;min-width:50px}
         .rth::after{content:'';position:absolute;right:0;top:0;bottom:0;width:3px;cursor:col-resize;background:rgba(255,255,255,0.08)}
         .chip{display:inline-flex;align-items:center;padding:2px 12px;border-radius:999px;font-size:11px;font-weight:600;cursor:pointer;transition:all .15s;white-space:nowrap}
@@ -187,7 +187,9 @@
                                     </td>
                                     <!-- Data cells -->
                                     <td x-show="!row._grp" class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
-                                    <td x-show="!row._grp" class="px-3 py-1.5 max-w-[180px] truncate" :title="row.Producto" x-text="row.Producto"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5" :title="row.Producto">
+                                        <div class="resize-x overflow-auto cs whitespace-nowrap min-w-[150px] w-[220px] max-w-[600px] text-xs py-1" x-text="row.Producto"></div>
+                                    </td>
                                     <td x-show="!row._grp" class="px-3 py-1.5">
                                         <select x-model="row.TipoOdoo" @change="dirty(row)" class="bg-slate-900 border border-slate-600 rounded px-1 text-xs w-24 focus:border-primary text-slate-300">
                                             <option value="Almacenable">Almacenable</option>
@@ -206,7 +208,9 @@
                                     <td x-show="!row._grp" class="px-3 py-1.5 text-right" x-text="row.Cantidad"></td>
                                     <td x-show="!row._grp" class="px-3 py-1.5 text-right font-mono" x-text="'$'+(parseFloat(row.Costo_Unitario)||0).toFixed(2)"></td>
                                     <td x-show="!row._grp" class="px-3 py-1.5 text-right font-mono font-bold text-blue-300" x-text="'$'+(parseFloat(row.Subtotal_Total)||0).toFixed(2)"></td>
-                                    <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500 max-w-[130px] truncate" :title="row.Proveedor" x-text="row.Proveedor"></td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500" :title="row.Proveedor">
+                                        <div class="resize-x overflow-auto cs whitespace-nowrap min-w-[100px] w-[130px] max-w-[300px] text-xs py-1" x-text="row.Proveedor"></div>
+                                    </td>
                                     <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500" x-text="row.Fecha"></td>
                                 </tr>
                             </template>
