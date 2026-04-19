@@ -71,6 +71,7 @@
         <div class="flex gap-2 mb-4 bg-slate-800/60 p-1 rounded-xl w-fit">
             <button @click="setTab('proc')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="tab==='proc'?'bg-primary text-white shadow-lg':'text-slate-400 hover:text-white'">📥 Procesamiento (XML / CSV)</button>
             <button @click="setTab('dash')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="tab==='dash'?'bg-accent text-slate-900 shadow-lg':'text-slate-400 hover:text-white'">🗄️ Master Histórico & BI</button>
+            <button @click="setTab('labels')" class="px-5 py-2 rounded-lg text-sm font-bold transition-all" :class="tab==='labels'?'bg-green-600 text-white shadow-lg':'text-slate-400 hover:text-white'">🏷️ Generar Etiquetas</button>
         </div>
 
         <!-- ======= PROCESAMIENTO ======= -->
@@ -382,6 +383,48 @@
                     </table>
                 </div>
             </div>
+            </div>
+        </div>
+
+        <!-- ======= LABELS GENERATOR ======= -->
+        <div x-show="tab==='labels'" x-transition style="display:none" class="space-y-4">
+            <div class="glass p-5 rounded-2xl border border-green-500/30 flex flex-col md:flex-row justify-between items-center gap-4">
+                <div>
+                    <h3 class="text-xl font-bold text-green-400">🏷️ Generador de Etiquetas</h3>
+                    <p class="text-xs text-slate-400">Se generarán etiquetas para los <b x-text="filteredItems.length"></b> artículos en la mesa.</p>
+                </div>
+                
+                <div class="flex items-center gap-4 bg-slate-900/50 p-2 rounded-xl border border-slate-700">
+                    <span class="text-xs font-bold text-slate-500 uppercase">Tienda Destino:</span>
+                    <div class="flex gap-1">
+                        <button @click="labelStore='Ele45'" :class="labelStore==='Ele45'?'bg-blue-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Electrica 45</button>
+                        <button @click="labelStore='Fer41'" :class="labelStore==='Fer41'?'bg-orange-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Ferreteria 41</button>
+                    </div>
+                </div>
+
+                <button @click="printLabels()" class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold shadow-lg transition-all">
+                    🖨️ Imprimir PDF
+                </button>
+            </div>
+
+            <!-- Labels Preview -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <template x-for="item in filteredItems" :key="item._id">
+                    <div class="bg-white text-black p-3 rounded shadow-sm flex flex-col justify-between border-2 border-slate-200 aspect-[5/3] overflow-hidden">
+                        <div>
+                            <div class="flex justify-between items-start mb-1">
+                                <span class="text-[14px] font-black leading-none" x-text="item.SKU || '---'"></span>
+                                <span class="text-[9px] bg-slate-100 px-1 rounded font-bold border border-slate-300" x-text="labelStore"></span>
+                            </div>
+                            <div class="text-[10px] uppercase font-bold leading-tight mb-1" x-text="item.Producto"></div>
+                        </div>
+                        <div class="flex justify-between items-end">
+                            <span class="text-[8px] italic text-slate-500 truncate max-w-[70%]" x-text="item.Categoria"></span>
+                            <span class="text-[8px] font-bold text-slate-900" x-text="'$' + (parseFloat(item.Costo_Unitario)||0).toFixed(2)"></span>
+                        </div>
+                    </div>
+                </template>
+            </div>
         </div>
 
     </div>
@@ -403,6 +446,7 @@ Alpine.data('app',()=>({
     dFilt:null, dProv:'', dCat:'', dMes:'',
     dGrp:'Ninguno', dCollapsed:{},
     dsc:'Subtotal_Total', dsa:false, dQ:'',
+    labelStore:'Ele45',
     odooSku:{}, odooName:{}, odooCats:[],
     pnlList: [
         'Gastos de Administración', 
@@ -584,6 +628,51 @@ Alpine.data('app',()=>({
         if(!c) return;
         this.items.forEach(i => { if(this.selU.includes(i.UUID_Factura)) { i.Categoria = c; this.dirty(i); } });
         this.saveLocal();
+    },
+
+    printLabels() {
+        const win = window.open('', '_blank');
+        const store = this.labelStore;
+        const html = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Etiquetas HerraMax - ${store}</title>
+                <style>
+                    @page { margin: 0; }
+                    body { margin: 0; padding: 10px; font-family: 'Inter', sans-serif; background: white; color: black; }
+                    .labels-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+                    .label { 
+                        width: 50mm; height: 25mm; border: 1px solid #eee; padding: 5px; box-sizing: border-box; 
+                        display: flex; flex-col; justify-content: space-between; page-break-inside: avoid;
+                        position: relative; overflow: hidden;
+                    }
+                    .sku { font-size: 14px; font-weight: 900; margin-bottom: 2px; display: block; }
+                    .suffix { position: absolute; right: 5px; top: 5px; font-size: 9px; font-weight: bold; border: 1px solid black; padding: 1px 3px; background: #eee; }
+                    .desc { font-size: 9px; font-weight: bold; text-transform: uppercase; line-height: 1.1; margin-bottom: 2px; max-height: 2.2em; overflow: hidden; }
+                    .cat { font-size: 7px; font-style: italic; color: #555; }
+                    .price { font-size: 8px; font-weight: bold; position: absolute; right: 5px; bottom: 5px; }
+                </style>
+            </head>
+            <body onload="window.print();">
+                <div class="labels-grid">
+                    ${this.filteredItems.map(item => `
+                        <div class="label">
+                            <span class="suffix">${store}</span>
+                            <div>
+                                <span class="sku">${item.SKU || '---'}</span>
+                                <div class="desc">${item.Producto}</div>
+                            </div>
+                            <div class="cat">${item.Categoria}</div>
+                            <span class="price">$${(parseFloat(item.Costo_Unitario) || 0).toFixed(2)}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            </body>
+            </html>
+        `;
+        win.document.write(html);
+        win.document.close();
     },
 
     applyBulkType(groupValue, tipo) {
