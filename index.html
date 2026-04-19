@@ -418,8 +418,7 @@
                             <div class="text-[10px] uppercase font-bold leading-tight mb-1" x-text="item.Producto"></div>
                         </div>
                         <div class="flex justify-between items-end">
-                            <span class="text-[8px] italic text-slate-500 truncate max-w-[70%]" x-text="item.Categoria"></span>
-                            <span class="text-[8px] font-bold text-slate-900" x-text="'$' + (parseFloat(item.Costo_Unitario)||0).toFixed(2)"></span>
+                            <span class="text-[8px] italic text-slate-500 truncate" x-text="item.Categoria"></span>
                         </div>
                     </div>
                 </template>
@@ -663,7 +662,6 @@ Alpine.data('app',()=>({
                                 <div class="desc">${item.Producto}</div>
                             </div>
                             <div class="cat">${item.Categoria}</div>
-                            <span class="price">$${(parseFloat(item.Costo_Unitario) || 0).toFixed(2)}</span>
                         </div>
                     `).join('')}
                 </div>
