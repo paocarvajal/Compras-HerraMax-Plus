@@ -396,10 +396,16 @@
                 <div class="flex items-center gap-4 bg-slate-900/50 p-2 rounded-xl border border-slate-700">
                     <span class="text-xs font-bold text-slate-500 uppercase">Filtrar por:</span>
                     <div class="flex gap-1">
-                        <button @click="labelStore='Ele45'" :class="labelStore==='Ele45'?'bg-blue-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Electrica 45</button>
-                        <button @click="labelStore='Fer41'" :class="labelStore==='Fer41'?'bg-orange-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Ferreteria 41</button>
-                        <button @click="labelStore='Todo'" :class="labelStore==='Todo'?'bg-slate-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Ver Todo</button>
+                        <button @click="labelStore='Ele45'" :class="labelStore==='Ele45'?'bg-blue-600 text-white':'bg-slate-800 text-slate-500'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">Electrica 45</button>
+                        <button @click="labelStore='Fer41'" :class="labelStore==='Fer41'?'bg-orange-600 text-white':'bg-slate-800 text-slate-500'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">Ferreteria 41</button>
+                        <button @click="labelStore='Todo'" :class="labelStore==='Todo'?'bg-slate-600 text-white':'bg-slate-800 text-slate-500'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">Ver Todo</button>
                     </div>
+                </div>
+
+                <div class="flex items-center gap-2 bg-slate-900/50 p-2 rounded-xl border border-slate-700">
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Acción Masiva:</span>
+                    <button @click="bulkSetLabelDest('Ele45')" class="px-3 py-1.5 bg-blue-900/40 hover:bg-blue-800/60 text-blue-400 rounded-lg text-[10px] font-bold border border-blue-500/30 transition-all">Asignar TODO a Ele45</button>
+                    <button @click="bulkSetLabelDest('Fer41')" class="px-3 py-1.5 bg-orange-900/40 hover:bg-orange-800/60 text-orange-400 rounded-lg text-[10px] font-bold border border-orange-500/30 transition-all">Asignar TODO a Fer41</button>
                 </div>
 
                 <button @click="printLabels()" class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold shadow-lg transition-all">
@@ -508,6 +514,23 @@ Alpine.data('app',()=>({
     ],
     // Charts registry
     charts:{},
+
+    init() {
+        // Escuchar cambios de auth y cargar datos seguros
+        window.fbD.onAuthStateChanged(window.fbD.auth, u => {
+            this.user = u;
+            if(u) {
+                this.loadCloud().then(() => {
+                    // Limpiar y asegurar propiedades de etiquetas en objetos viejos
+                    this.items.forEach(i => {
+                        if(!i._dest) i._dest = 'Ele45';
+                        if(i._print === undefined) i._print = true;
+                        if(i._labelQty === undefined) i._labelQty = (parseFloat(i.Cantidad) || 1);
+                    });
+                });
+            }
+        });
+    },
 
     // ---------- COMPUTED ----------
     get totalSpent(){ return this.items.reduce((s,i)=>s+(parseFloat(i.Subtotal_Total)||0),0); },
@@ -734,6 +757,17 @@ Alpine.data('app',()=>({
             }
         });
         alert(`¡Listo! Se actualizaron ${count} filas a ${tipo}`);
+    },
+
+    bulkSetLabelDest(dest) {
+        let count = 0;
+        this.filteredItems.forEach(i => {
+            i._dest = dest;
+            this.dirty(i);
+            count++;
+        });
+        alert(`¡Listo! Se asignaron ${count} artículos a ${dest}`);
+        this.saveLocal();
     },
 
     async loadCloud(){
