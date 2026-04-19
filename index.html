@@ -440,9 +440,10 @@ Alpine.data('app',()=>({
         fetch('./enhanced_cats.json').then(r=>r.json()).then(data=>{
             this.odooSku=data.sku_map||{};
             this.odooName=data.name_map||{};
-            const allCats=[...new Set([...Object.values(this.odooSku),...Object.values(this.odooName)])];
+            const pnlCats = ['Gastos de Administración', 'Gastos de Venta', 'Gastos de TI y Software', 'Gastos de Mantenimiento', 'Papelería y Útiles de Oficina', 'Honorarios Profesionales', 'Gastos Financieros', 'Viáticos y Combustible', 'Mobiliario y Equipo (Activo Fijo)'];
+            const allCats=[...new Set([...Object.values(this.odooSku),...Object.values(this.odooName), ...pnlCats])];
             this.odooCats=allCats.filter(c=>c&&c!=='Sin Familia').sort();
-        }).catch(()=>{ this.odooCats=['Electricidad','Plomería','Herramienta Manual','Herramienta Eléctrica','Tornillería y Fijación','Cerrajería','Iluminación','Materiales Construcción','Seguridad']; });
+        }).catch(()=>{ this.odooCats=['Electricidad','Plomería','Herramienta Manual','Herramienta Eléctrica','Tornillería y Fijación','Cerrajería','Iluminación','Materiales Construcción','Seguridad', 'Gastos de Administración', 'Gastos de Venta', 'Gastos de TI y Software', 'Gastos de Mantenimiento', 'Papelería y Útiles de Oficina', 'Honorarios Profesionales'].sort(); });
         const t=setInterval(()=>{
             if(window.fbA){ clearInterval(t);
                 window.fbA.onAuthStateChanged(window.fbA.auth,u=>{ this.user=u; if(u) this.loadCloud(); });
