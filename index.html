@@ -135,17 +135,43 @@
                     <span>Subtotal: <b class="text-blue-300" x-text="'$'+filteredSubtotal.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
                 </div>
                 <div class="flex items-center gap-2">
-                    <template x-if="selU.length > 0">
-                        <button @click="delInvoices()" class="px-3 py-1 bg-red-900/50 hover:bg-red-900 text-red-200 border border-red-700 rounded transition-all">
-                            🗑️ Borrar <span x-text="selU.length"></span> Facturas
-                        </button>
-                    </template>
-                    <button @click="showHistory = !showHistory" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded">
+                    <button @click="showHistory = !showHistory" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded transition-all">
                         <span x-text="showHistory ? '👁️ Ocultar Histórico' : '📂 Cargar Histórico Nube'"></span>
                     </button>
+                    <button @click="wipeCloud()" class="px-3 py-1 bg-red-950/20 hover:bg-red-900 border border-red-900/50 text-red-400 rounded transition-all">🔥 BD</button>
                 </div>
             </div>
 
+            <!-- BULK ACTIONS BAR -->
+            <div class="glass border-x border-b border-slate-700/30 bg-blue-900/20 px-4 py-2 flex items-center gap-4 transition-all" x-show="selU.length > 0" x-transition>
+                <div class="flex items-center gap-2 border-r border-slate-700/50 pr-4">
+                    <span class="text-[10px] font-bold text-blue-400 uppercase tracking-widest">Acción Masiva</span>
+                    <span class="px-2 py-0.5 bg-blue-600/20 text-blue-400 rounded text-[10px] font-bold border border-blue-500/30"><span x-text="selU.length"></span> facturas</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase">Tipo:</span>
+                    <select @change="bulkApplyType($event.target.value); $event.target.value=''" class="bg-slate-900 border border-slate-700 rounded text-[10px] px-2 py-1 text-slate-300 focus:border-blue-500 outline-none">
+                        <option value="">-- Cambiar a --</option>
+                        <option value="Almacenable">📦 Almacenable</option>
+                        <option value="Servicio">⚙️ Servicio/Gasto</option>
+                        <option value="Regalo">🎁 Regalo/Promo</option>
+                    </select>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-500 font-bold uppercase">Categoría:</span>
+                    <select @change="bulkApplyCat($event.target.value); $event.target.value=''" class="bg-slate-900 border border-slate-700 rounded text-[10px] px-2 py-1 text-slate-300 focus:border-blue-500 outline-none max-w-[180px]">
+                        <option value="">-- Cambiar a --</option>
+                        <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
+                    </select>
+                </div>
+                
+                <div class="ml-auto flex gap-2">
+                     <button @click="delInvoices()" class="px-3 py-1 bg-red-900/80 hover:bg-red-700 text-white rounded text-[10px] font-bold transition-all shadow-lg border border-red-600/50">🗑️ Borrar de Mesa</button>
+                </div>
+            </div>
+            
             <!-- DATA TABLE -->
             <div class="glass rounded-xl border border-slate-700/50 flex flex-col" style="height:560px">
                 <div x-show="!showHistory && sessUUIDs.length === 0" class="flex-1 flex flex-col items-center justify-center text-slate-500">
@@ -157,17 +183,38 @@
                     <table class="w-full text-left text-xs">
                         <thead class="sticky top-0 bg-slate-800/95 backdrop-blur text-slate-300 z-10">
                             <tr>
-                                <th class="px-3 py-3 w-10"></th>
+                                <th class="px-3 py-3 w-10 text-center">
+                                    <input type="checkbox" :checked="selU.length === uniqueUUIDs.length && uniqueUUIDs.length > 0" 
+                                           @change="$el.checked ? (selU = [...uniqueUUIDs]) : (selU = [])"
+                                           class="accent-primary w-4 h-4 cursor-pointer">
+                                </th>
                                 <th class="px-3 py-3 text-slate-400 font-normal">Factura (5)</th>
-                                <th class="px-3 py-3 rth sort-th" @click="sBy('SKU')">SKU <span x-show="sc==='SKU'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th" @click="sBy('Producto')">Descripción <span x-show="sc==='Producto'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th" @click="sBy('TipoOdoo')">Tipo <span x-show="sc==='TipoOdoo'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th" @click="sBy('Categoria')">Categoría Odoo <span x-show="sc==='Categoria'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Cantidad')">Cant <span x-show="sc==='Cantidad'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Costo_Unitario')">Unit $ <span x-show="sc==='Costo_Unitario'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th text-right" @click="sBy('Subtotal_Total')">Subtotal <span x-show="sc==='Subtotal_Total'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th" @click="sBy('Proveedor')">Proveedor <span x-show="sc==='Proveedor'" x-text="sa?'🔼':'🔽'"></span></th>
-                                <th class="px-3 py-3 rth sort-th" @click="sBy('Fecha')">Fecha <span x-show="sc==='Fecha'" x-text="sa?'🔼':'🔽'"></span></th>
+                                <th class="px-2 py-3">
+                                    <div class="resize-x overflow-auto cs min-w-[60px] w-[80px] sort-th" @click="sBy('SKU')">SKU <span x-show="sc==='SKU'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3">
+                                    <div class="resize-x overflow-auto cs min-w-[150px] w-[220px] sort-th" @click="sBy('Producto')">Descripción <span x-show="sc==='Producto'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3">
+                                    <div class="resize-x overflow-auto cs min-w-[100px] w-[110px] sort-th" @click="sBy('TipoOdoo')">Tipo <span x-show="sc==='TipoOdoo'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3">
+                                    <div class="resize-x overflow-auto cs min-w-[120px] w-[140px] sort-th" @click="sBy('Categoria')">Categoría Odoo <span x-show="sc==='Categoria'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3 text-right">
+                                    <div class="sort-th" @click="sBy('Cantidad')">Cant <span x-show="sc==='Cantidad'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3 text-right">
+                                    <div class="sort-th" @click="sBy('Costo_Unitario')">Unit $ <span x-show="sc==='Costo_Unitario'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3 text-right">
+                                    <div class="sort-th" @click="sBy('Subtotal_Total')">Subtotal <span x-show="sc==='Subtotal_Total'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3">
+                                    <div class="resize-x overflow-auto cs min-w-[100px] w-[130px] sort-th" @click="sBy('Proveedor')">Proveedor <span x-show="sc==='Proveedor'" x-text="sa?'🔼':'🔽'"></span></div>
+                                </th>
+                                <th class="px-2 py-3 text-slate-400 font-normal">Timbrado</th>
+                                <th class="px-2 py-3 sort-th" @click="sBy('Fecha')">Emisión <span x-show="sc==='Fecha'" x-text="sa?'🔼':'🔽'"></span></th>
                             </tr>
                         </thead>
                         <tbody class="divide-y divide-slate-700/30">
@@ -178,7 +225,7 @@
                                     :class="row._grp ? 'grp-hdr' : (sessUUIDs.includes(row.UUID_Factura)?'bg-blue-950/20 hover:bg-slate-700/25 transition-colors':'hover:bg-slate-700/25 transition-colors')"
                                     @click="row._grp && toggleGroup(row._grpKey)">
                                     <!-- Group header cell -->
-                                    <td x-show="row._grp" colspan="11">
+                                    <td x-show="row._grp" colspan="13">
                                         <span x-text="collapsedGroups[row._grpKey]?'▶':'▼'"></span>
                                         <span class="ml-2" x-text="row._grpLabel"></span>
                                         <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> artículos &middot; $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>)</span>
@@ -188,7 +235,7 @@
                                                 <option value="" disabled selected>-- Elegir Tipo --</option>
                                                 <option value="Almacenable">Almacenable (Inventario)</option>
                                                 <option value="Servicio">Servicio/Gasto Operativo</option>
-                                                <option value="Regalo">Regalo/Promocional</option>
+                                                <option value="Regalo">Regalo</option>
                                             </select>
                                         </div>
                                     </td>
@@ -204,14 +251,14 @@
                                         <div class="resize-x overflow-auto cs whitespace-nowrap min-w-[150px] w-[220px] max-w-[600px] text-xs py-1" x-text="row.Producto"></div>
                                     </td>
                                     <td x-show="!row._grp" class="px-3 py-1.5">
-                                        <select x-model="row.TipoOdoo" @change="dirty(row)" class="bg-slate-900 border border-slate-600 rounded px-1 text-xs w-24 focus:border-primary text-slate-300">
-                                            <option value="Almacenable">Almacenable</option>
-                                            <option value="Servicio">Servicio/Gasto</option>
-                                            <option value="Regalo">Regalo/Promo</option>
+                                        <select x-model="row.TipoOdoo" @change="dirty(row); if(selU.includes(row.UUID_Factura)) bulkApplyType(row.TipoOdoo)" class="bg-slate-900 border border-slate-600 rounded px-1 text-xs w-24 focus:border-primary text-slate-300">
+                                            <option value="Almacenable">📦 Almacen.</option>
+                                            <option value="Servicio">⚙️ Servicio</option>
+                                            <option value="Regalo">🎁 Regalo</option>
                                         </select>
                                     </td>
                                     <td x-show="!row._grp" class="px-3 py-1.5">
-                                        <select x-model="row.Categoria" @change="dirty(row)"
+                                        <select x-model="row.Categoria" @change="dirty(row); if(selU.includes(row.UUID_Factura)) bulkApplyCat(row.Categoria)"
                                             class="bg-slate-900 border rounded px-1.5 py-0.5 text-xs font-semibold w-36 focus:outline-none focus:border-primary"
                                             :class="row.Categoria&&row.Categoria!=='Sin Asignar'?'border-green-700 text-green-400':'border-red-800 text-red-400'">
                                             <option>Sin Asignar</option>
@@ -224,6 +271,7 @@
                                     <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500" :title="row.Proveedor">
                                         <div class="resize-x overflow-auto cs whitespace-nowrap min-w-[100px] w-[130px] max-w-[300px] text-xs py-1" x-text="row.Proveedor"></div>
                                     </td>
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500 text-[10px]" x-text="row.Fecha_Timbrado || '-'"></td>
                                     <td x-show="!row._grp" class="px-3 py-1.5 text-slate-500" x-text="row.Fecha"></td>
                                 </tr>
                             </template>
@@ -355,8 +403,8 @@ Alpine.data('app',()=>({
     dFilt:null, dProv:'', dCat:'', dMes:'',
     dGrp:'Ninguno', dCollapsed:{},
     dsc:'Subtotal_Total', dsa:false, dQ:'',
-    // Odoo data
     odooSku:{}, odooName:{}, odooCats:[],
+    pnlList: ['Gastos de Administración', 'Gastos de Venta', 'Gastos de TI y Software', 'Gastos de Mantenimiento', 'Papelería y Útiles de Oficina', 'Honorarios Profesionales', 'Gastos Financieros', 'Viáticos y Combustible', 'Mobiliario y Equipo (Activo Fijo)', 'Servicios Públicos (Luz/Agua)', 'Arrendamientos'],
     // Charts registry
     charts:{},
 
@@ -458,10 +506,9 @@ Alpine.data('app',()=>({
         fetch('./enhanced_cats.json').then(r=>r.json()).then(data=>{
             this.odooSku=data.sku_map||{};
             this.odooName=data.name_map||{};
-            const pnlCats = ['Gastos de Administración', 'Gastos de Venta', 'Gastos de TI y Software', 'Gastos de Mantenimiento', 'Papelería y Útiles de Oficina', 'Honorarios Profesionales', 'Gastos Financieros', 'Viáticos y Combustible', 'Mobiliario y Equipo (Activo Fijo)'];
-            const allCats=[...new Set([...Object.values(this.odooSku),...Object.values(this.odooName), ...pnlCats])];
+            const allCats=[...new Set([...Object.values(this.odooSku),...Object.values(this.odooName), ...this.pnlList])];
             this.odooCats=allCats.filter(c=>c&&c!=='Sin Familia').sort();
-        }).catch(()=>{ this.odooCats=['Electricidad','Plomería','Herramienta Manual','Herramienta Eléctrica','Tornillería y Fijación','Cerrajería','Iluminación','Materiales Construcción','Seguridad', 'Gastos de Administración', 'Gastos de Venta', 'Gastos de TI y Software', 'Gastos de Mantenimiento', 'Papelería y Útiles de Oficina', 'Honorarios Profesionales'].sort(); });
+        }).catch(()=>{ this.odooCats=['Electricidad','Plomería','Herramienta Manual','Herramienta Eléctrica','Tornillería y Fijación','Cerrajería','Iluminación','Materiales Construcción','Seguridad', ...this.pnlList].sort(); });
         const t=setInterval(()=>{
             if(window.fbA){ clearInterval(t);
                 window.fbA.onAuthStateChanged(window.fbA.auth,u=>{ this.user=u; if(u) this.loadCloud(); });
@@ -473,6 +520,12 @@ Alpine.data('app',()=>({
 
     async login(){ try{ await window.fbA.signInWithPopup(window.fbA.auth,new window.fbA.GoogleAuthProvider()); }catch(e){console.error(e);} },
     async logout(){ await window.fbA.signOut(window.fbA.auth); },
+
+    dirty(item){ 
+        if(!item) return;
+        item.ModifiedBy=this.user.email; 
+        this.dirtySet.add(item); 
+    },
 
     async clearSess() {
         if(!confirm('¿Estás segura de Limpiar la Mesa? \n\nSe borrarán de tu pantalla las facturas XML que acabas de subir.')) return;
@@ -503,6 +556,18 @@ Alpine.data('app',()=>({
         this.items = this.items.filter(i => !this.selU.includes(i.UUID_Factura));
         this.sessUUIDs = this.sessUUIDs.filter(u => !this.selU.includes(u));
         this.selU = [];
+        this.saveLocal();
+    },
+
+    bulkApplyType(t) {
+        if(!t) return;
+        this.items.forEach(i => { if(this.selU.includes(i.UUID_Factura)) { i.TipoOdoo = t; this.dirty(i); } });
+        this.saveLocal();
+    },
+
+    bulkApplyCat(c) {
+        if(!c) return;
+        this.items.forEach(i => { if(this.selU.includes(i.UUID_Factura)) { i.Categoria = c; this.dirty(i); } });
         this.saveLocal();
     },
 
@@ -589,8 +654,9 @@ Alpine.data('app',()=>({
         const xml=new DOMParser().parseFromString(await file.text(),'text/xml');
         const emisorN=xml.getElementsByTagName('cfdi:Emisor')[0]||xml.getElementsByTagName('Emisor')[0];
         const emisor=emisorN?emisorN.getAttribute('Nombre')||'Desconocido':'Desconocido';
-        const timbre=xml.getElementsByTagName('tfd:TimbreFiscalDigital')[0];
+        const timbre=xml.getElementsByTagName('tfd:TimbreFiscalDigital')[0] || xml.getElementsByTagName('TimbreFiscalDigital')[0];
         const uuid=timbre?.getAttribute('UUID')||file.name.replace('.xml','');
+        const fechaTimbrado = timbre?.getAttribute('FechaTimbrado')?.substring(0,10) || 'Desconocida';
         const comp=xml.getElementsByTagName('cfdi:Comprobante')[0]||xml.getElementsByTagName('Comprobante')[0];
         const fecha=comp?.getAttribute('Fecha')?.substring(0,10)||'Desconocida';
         let cs=[...xml.getElementsByTagName('cfdi:Concepto')];
@@ -599,7 +665,7 @@ Alpine.data('app',()=>({
             const sku=c.getAttribute('NoIdentificacion')||'';
             const prod=c.getAttribute('Descripcion');
             const cat=this.getCat(sku)||this.getCatByName(prod)||this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===prod))?.Categoria||'Sin Asignar';
-            return{Fecha:fecha,Proveedor:emisor,SKU:sku,Producto:prod,
+            return{Fecha:fecha, Fecha_Timbrado:fechaTimbrado, Proveedor:emisor,SKU:sku,Producto:prod,
                 Cantidad:parseFloat(c.getAttribute('Cantidad')),
                 Costo_Unitario:parseFloat(c.getAttribute('ValorUnitario')),
                 Subtotal_Total:parseFloat(c.getAttribute('Importe')),
