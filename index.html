@@ -48,6 +48,7 @@
             <div class="flex items-center gap-3">
                 <img :src="user.photoURL" class="w-8 h-8 rounded-full border-2 border-primary">
                 <span class="text-xs text-slate-400 hidden md:block" x-text="user.email"></span>
+                <button @click="wipeCloud()" class="px-3 py-2 bg-red-900 hover:bg-red-800 text-white rounded-lg text-xs font-bold transition-all border border-red-700" title="Peligro: Borra Firebase">🔥 BD</button>
                 <button @click="clearSess()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition-all border border-slate-700">🧹 Limpiar Sesión</button>
                 <button @click="syncToCloud()" :class="syncing?'animate-pulse':''" class="px-3 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-xs font-bold transition-all">☁️ Sincronizar</button>
                 <button @click="exportOdooPOs()" class="px-4 py-2 bg-gradient-to-r from-blue-600 to-primary rounded-lg text-sm font-bold shadow-[0_0_14px_rgba(59,130,246,0.4)]">🚀 Exportar POs</button>
@@ -461,8 +462,22 @@ Alpine.data('app',()=>({
         this.dirtySet.clear();
         this.sessUUIDs = [];
         this.showHistory = false;
-        // No borramos this.items ni recargamos la nube para que no haya parpadeo.
         // Al poner showHistory = false y sessUUIDs vacío, la mesa se verá limpia automáticamente.
+    },
+
+    async wipeCloud() {
+        if(prompt('Para confirmar el borrado TOTAL de la base de datos histórica externa, escribe "borrar":') !== 'borrar') return;
+        try {
+            const b = window.fbD.writeBatch(window.fbD.db);
+            const s = await window.fbD.getDocs(window.fbD.collection(window.fbD.db, 'purchase_lines'));
+            let n = 0;
+            s.forEach(d => { b.delete(d.ref); n++; });
+            if(n===0) return alert('La base de datos ya está en 0.');
+            await b.commit();
+            localStorage.removeItem('hm_cache_invoices');
+            alert('¡Base de datos en la nube formateada a $0!');
+            location.reload();
+        } catch(e) { console.error(e); alert('Error borrando bóveda.'); }
     },
 
     applyBulkType(groupValue, tipo) {
