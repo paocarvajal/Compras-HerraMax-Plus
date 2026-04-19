@@ -387,97 +387,105 @@
 
         <!-- ======= LABELS GENERATOR ======= -->
         <div x-show="tab==='labels'" x-transition class="space-y-4">
-            <div class="glass p-5 rounded-2xl border border-green-500/30 flex flex-col md:flex-row justify-between items-center gap-4">
+
+            <!-- Header bar -->
+            <div class="glass p-4 rounded-2xl border border-green-500/30 flex flex-wrap justify-between items-center gap-3">
                 <div>
                     <h3 class="text-xl font-bold text-green-400">🏷️ Generador de Etiquetas</h3>
-                    <p class="text-xs text-slate-400">Se generarán etiquetas para los <b x-text="filteredItems.length"></b> artículos en la mesa.</p>
+                    <p class="text-xs text-slate-400">Asigna cada <b>factura</b> a una tienda. Todos sus productos heredan esa tienda.</p>
                 </div>
-                
-                <div class="flex items-center gap-4 bg-slate-900/50 p-2 rounded-xl border border-slate-700">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Filtrar por:</span>
-                    <div class="flex gap-1">
-                        <button @click="labelStore='Ele45'" :class="labelStore==='Ele45'?'bg-blue-600 text-white':'bg-slate-800 text-slate-500'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">Electrica 45</button>
-                        <button @click="labelStore='Fer41'" :class="labelStore==='Fer41'?'bg-orange-600 text-white':'bg-slate-800 text-slate-500'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">Ferreteria 41</button>
-                        <button @click="labelStore='Todo'" :class="labelStore==='Todo'?'bg-slate-600 text-white':'bg-slate-800 text-slate-500'" class="px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all">Ver Todo</button>
-                    </div>
-                </div>
-
                 <div class="flex items-center gap-2 bg-slate-900/50 p-2 rounded-xl border border-slate-700">
-                    <span class="text-[10px] font-bold text-slate-500 uppercase">Acción Masiva:</span>
-                    <button @click="bulkSetLabelDest('Ele45')" class="px-3 py-1.5 bg-blue-900/40 hover:bg-blue-800/60 text-blue-400 rounded-lg text-[10px] font-bold border border-blue-500/30 transition-all">Asignar TODO a Ele45</button>
-                    <button @click="bulkSetLabelDest('Fer41')" class="px-3 py-1.5 bg-orange-900/40 hover:bg-orange-800/60 text-orange-400 rounded-lg text-[10px] font-bold border border-orange-500/30 transition-all">Asignar TODO a Fer41</button>
+                    <span class="text-[10px] font-bold text-slate-500 uppercase">Filtrar:</span>
+                    <button @click="labelStore='Todo'" :class="labelStore==='Todo'?'bg-slate-600 text-white':'bg-slate-800 text-slate-400'" class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all">Ver Todo</button>
+                    <button @click="labelStore='Ele45'" :class="labelStore==='Ele45'?'bg-blue-600 text-white':'bg-slate-800 text-slate-400'" class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all">⚡ Eléctrica 45</button>
+                    <button @click="labelStore='Fer41'" :class="labelStore==='Fer41'?'bg-orange-600 text-white':'bg-slate-800 text-slate-400'" class="px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all">🔩 Ferretería 41</button>
                 </div>
-
                 <button @click="printLabels()" class="px-6 py-2 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold shadow-lg transition-all">
                     🖨️ Imprimir PDF
                 </button>
             </div>
 
-            <!-- Labels Control Table -->
-            <div class="glass rounded-xl border border-slate-700/50 overflow-hidden">
+            <!-- STEP 1: Assign store per invoice -->
+            <div class="glass rounded-2xl border border-slate-700/50 overflow-hidden">
+                <div class="bg-slate-800/80 px-4 py-2 border-b border-slate-700 flex items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Paso 1 — Asigna cada factura a su tienda</span>
+                </div>
+                <div class="divide-y divide-slate-700/30">
+                    <template x-for="inv in labelInvoices" :key="inv.uuid">
+                        <div class="flex flex-wrap items-center gap-3 px-4 py-3 hover:bg-slate-700/20 transition-colors">
+                            <div class="flex-1 min-w-0">
+                                <div class="text-[11px] font-bold text-slate-300" x-text="inv.proveedor"></div>
+                                <div class="text-[10px] text-slate-500 font-mono" x-text="'UUID: ' + inv.uuid.substring(0,18) + '...'"></div>
+                                <div class="text-[10px] text-slate-500" x-text="inv.count + ' productos · ' + inv.fecha"></div>
+                            </div>
+                            <div class="flex gap-1 shrink-0">
+                                <button
+                                    @click="setInvoiceStore(inv.uuid, 'Ele45')"
+                                    :class="invoiceStore[inv.uuid]==='Ele45' ? 'bg-blue-600 text-white ring-2 ring-blue-400' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'"
+                                    class="px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all">
+                                    ⚡ Eléctrica 45
+                                </button>
+                                <button
+                                    @click="setInvoiceStore(inv.uuid, 'Fer41')"
+                                    :class="invoiceStore[inv.uuid]==='Fer41' ? 'bg-orange-600 text-white ring-2 ring-orange-400' : 'bg-slate-800 text-slate-500 hover:bg-slate-700'"
+                                    class="px-4 py-1.5 rounded-lg text-[11px] font-bold transition-all">
+                                    🔩 Ferretería 41
+                                </button>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+
+            <!-- STEP 2: Products list filtered & qty control -->
+            <div class="glass rounded-2xl border border-slate-700/50 overflow-hidden">
+                <div class="bg-slate-800/80 px-4 py-2 border-b border-slate-700 flex items-center gap-2">
+                    <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Paso 2 — Ajusta cantidades de etiquetas</span>
+                    <span class="text-[10px] text-slate-500" x-text="'(' + labelVisibleItems.length + ' productos)'"></span>
+                </div>
                 <table class="w-full text-left text-[11px]">
-                    <thead class="bg-slate-800 text-slate-400 uppercase tracking-wider">
+                    <thead class="bg-slate-800/50 text-slate-500 uppercase text-[9px] tracking-wider">
                         <tr>
-                            <th class="px-3 py-2 w-10"></th>
+                            <th class="px-3 py-2 w-8"><input type="checkbox" @change="e => labelVisibleItems.forEach(i => i._print = e.target.checked)" class="accent-green-500"></th>
+                            <th class="px-3 py-2">Tienda</th>
                             <th class="px-3 py-2">SKU</th>
                             <th class="px-3 py-2">Descripción</th>
-                            <th class="px-3 py-2">Categoría</th>
-                            <th class="px-3 py-2 text-center">Factura</th>
+                            <th class="px-3 py-2 text-center">Cant. Fac.</th>
                             <th class="px-3 py-2 text-center">Etiquetas</th>
                         </tr>
                     </thead>
-                    <tbody class="divide-y divide-slate-700/30">
-                        <template x-for="item in filteredItems.filter(i => labelStore==='Todo' || i._dest===labelStore)" :key="item.FB_ID">
-                            <tr class="hover:bg-slate-700/20 transition-colors" :class="!item._print ? 'opacity-50' : ''">
-                                <td class="px-3 py-1.5 text-center">
-                                    <input type="checkbox" x-model="item._print" class="accent-green-500">
-                                </td>
-                                <td class="px-3 py-1.5 font-bold text-accent" x-text="item.SKU"></td>
-                                <td class="px-3 py-1.5 text-slate-300" x-text="item.Producto"></td>
+                    <tbody class="divide-y divide-slate-700/20">
+                        <template x-for="item in labelVisibleItems" :key="item.FB_ID">
+                            <tr :class="!item._print ? 'opacity-40' : ''" class="hover:bg-slate-700/20 transition-colors">
+                                <td class="px-3 py-1.5 text-center"><input type="checkbox" x-model="item._print" class="accent-green-500"></td>
                                 <td class="px-3 py-1.5">
-                                    <div class="flex flex-col gap-1">
-                                        <select x-model="item.Categoria" @change="dirty(item)" class="bg-slate-900 border border-slate-700 rounded px-1 text-[10px] w-full text-slate-400">
-                                            <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
-                                        </select>
-                                        <div class="flex gap-1">
-                                            <button @click="item._dest='Ele45'; dirty(item)" :class="item._dest==='Ele45'?'text-blue-400 font-bold border-blue-400':'text-slate-600 border-slate-700'" class="text-[8px] px-1 border rounded">Ele45</button>
-                                            <button @click="item._dest='Fer41'; dirty(item)" :class="item._dest==='Fer41'?'text-orange-400 font-bold border-orange-400':'text-slate-600 border-slate-700'" class="text-[8px] px-1 border rounded">Fer41</button>
-                                        </div>
-                                    </div>
+                                    <span x-text="invoiceStore[item.UUID_Factura] || '—'"
+                                          :class="invoiceStore[item.UUID_Factura]==='Ele45'?'text-blue-400':'invoiceStore[item.UUID_Factura]==='Fer41'?'text-orange-400':'text-slate-500'"
+                                          class="font-bold text-[10px]"></span>
                                 </td>
-                                <td class="px-3 py-1.5 text-center font-mono text-slate-500" x-text="item.Cantidad"></td>
+                                <td class="px-3 py-1.5 font-bold text-yellow-300" x-text="item.SKU"></td>
+                                <td class="px-3 py-1.5 text-slate-300" x-text="item.Producto"></td>
+                                <td class="px-3 py-1.5 text-center text-slate-500 font-mono" x-text="item.Cantidad"></td>
                                 <td class="px-3 py-1.5 text-center">
-                                    <input type="number" x-model.number="item._labelQty" class="bg-slate-900 border border-slate-700 rounded w-12 text-center text-xs text-green-400 font-bold" min="0">
+                                    <input type="number" x-model.number="item._labelQty" min="0" class="bg-slate-900 border border-slate-700 rounded w-12 text-center text-xs text-green-400 font-bold">
                                 </td>
                             </tr>
                         </template>
+                        <tr x-show="labelVisibleItems.length === 0">
+                            <td colspan="6" class="text-center py-6 text-slate-500 text-sm">
+                                <span x-show="labelStore !== 'Todo'">Ninguna factura asignada a esta tienda aún. Asigna facturas en el Paso 1.</span>
+                                <span x-show="labelStore === 'Todo'">Carga facturas en la pestaña de Procesamiento.</span>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-
-            <!-- Labels Preview -->
-            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                <template x-for="item in filteredItems.filter(i => (labelStore==='Todo' || i._dest===labelStore) && i._print && i._labelQty > 0)" :key="item.FB_ID">
-                    <div class="bg-white text-black p-3 rounded shadow-sm flex flex-col justify-between border-2 border-slate-200 aspect-[5/3] overflow-hidden relative">
-                         <div class="absolute top-0 left-0 bg-green-600 text-[8px] text-white px-1 font-bold" x-text="'x'+item._labelQty"></div>
-                        <div>
-                            <div class="flex justify-between items-start mb-1">
-                                <span class="text-[14px] font-black leading-none" x-text="item.SKU || '---'"></span>
-                                <span class="text-[9px] bg-slate-100 px-1 rounded font-bold border border-slate-300" x-text="item._dest"></span>
-                            </div>
-                            <div class="text-[10px] uppercase font-bold leading-tight mb-1" x-text="item.Producto"></div>
-                        </div>
-                        <div class="flex justify-between items-end">
-                            <span class="text-[8px] italic text-slate-500 truncate" x-text="item.Categoria"></span>
-                        </div>
-                    </div>
-                </template>
-            </div>
         </div>
 
-    </div> <!-- closes div at line 69 -->
+    </div> <!-- end user -->
     </template>
 </main>
+
 
 <script>
 document.addEventListener('alpine:init',()=>{
@@ -494,7 +502,8 @@ Alpine.data('app',()=>({
     dFilt:null, dProv:'', dCat:'', dMes:'',
     dGrp:'Ninguno', dCollapsed:{},
     dsc:'Subtotal_Total', dsa:false, dQ:'',
-    labelStore:'Ele45',
+    labelStore:'Todo',
+    invoiceStore:{}, // { uuid: 'Ele45' | 'Fer41' }
     odooSku:{}, odooName:{}, odooCats:[],
     pnlList: [
         'Gastos de Administración', 
@@ -530,6 +539,23 @@ Alpine.data('app',()=>({
                 });
             }
         });
+    },
+
+    // Labels computed
+    get labelInvoices(){
+        // One entry per unique invoice in the current session view
+        const src = this.showHistory ? this.items : this.items.filter(i => this.sessUUIDs.includes(i.UUID_Factura));
+        const seen = {};
+        src.forEach(i => {
+            if(!seen[i.UUID_Factura]) seen[i.UUID_Factura] = { uuid: i.UUID_Factura, proveedor: i.Proveedor, fecha: i.Fecha, count: 0 };
+            seen[i.UUID_Factura].count++;
+        });
+        return Object.values(seen);
+    },
+    get labelVisibleItems(){
+        const src = this.showHistory ? this.items : this.items.filter(i => this.sessUUIDs.includes(i.UUID_Factura));
+        if(this.labelStore === 'Todo') return src.filter(i => !!this.invoiceStore[i.UUID_Factura]);
+        return src.filter(i => this.invoiceStore[i.UUID_Factura] === this.labelStore);
     },
 
     // ---------- COMPUTED ----------
@@ -697,17 +723,16 @@ Alpine.data('app',()=>({
 
     printLabels() {
         const win = window.open('', '_blank');
-        const store = this.labelStore;
-        const toPrint = this.filteredItems.filter(i => i._print && i._labelQty > 0);
+        const toPrint = this.labelVisibleItems.filter(i => i._print && (i._labelQty || 0) > 0);
+        if (!toPrint.length) { alert('No hay productos seleccionados en la tienda activa.'); win.close(); return; }
         const html = `
             <!DOCTYPE html>
             <html>
             <head>
-                <title>Etiquetas HerraMax - ${store}</title>
+                <title>Etiquetas HerraMax</title>
                 <style>
                     @page { size: 50.8mm 25.4mm; margin: 0; }
                     body { margin: 0; padding: 0; font-family: 'Inter', sans-serif; background: white; color: black; }
-                    .labels-container { display: block; }
                     .label { 
                         width: 50.8mm; height: 25.4mm; padding: 2mm 3mm; box-sizing: border-box; 
                         display: flex; flex-direction: column; justify-content: space-between; 
@@ -720,31 +745,32 @@ Alpine.data('app',()=>({
                 </style>
             </head>
             <body onload="window.print();">
-                <div class="labels-container">
-                    ${toPrint.map(item => {
-                        const count = parseInt(item._labelQty) || 1;
-                        let labels = '';
-                        for(let i=0; i<count; i++) {
-                            labels += `
-                                <div class="label">
-                                    <span class="suffix">${item._dest}</span>
-                                    <div>
-                                        <span class="sku">${item.SKU || '---'}</span>
-                                        <div class="desc">${item.Producto}</div>
-                                    </div>
-                                    <div class="cat">${item.Categoria}</div>
+                ${toPrint.map(item => {
+                    const store = this.invoiceStore[item.UUID_Factura] || 'HerraMax';
+                    const count = parseInt(item._labelQty) || 1;
+                    let labels = '';
+                    for(let i=0; i<count; i++) {
+                        labels += `
+                            <div class="label">
+                                <span class="suffix">${store}</span>
+                                <div>
+                                    <span class="sku">${item.SKU || '---'}</span>
+                                    <div class="desc">${item.Producto}</div>
                                 </div>
-                            `;
-                        }
-                        return labels;
-                    }).join('')}
-                </div>
+                                <div class="cat">${item.Categoria}</div>
+                            </div>
+                        `;
+                    }
+                    return labels;
+                }).join('')}
             </body>
             </html>
         `;
         win.document.write(html);
         win.document.close();
     },
+
+
 
     applyBulkType(groupValue, tipo) {
         if(!tipo) return;
@@ -757,6 +783,11 @@ Alpine.data('app',()=>({
             }
         });
         alert(`¡Listo! Se actualizaron ${count} filas a ${tipo}`);
+    },
+
+    setInvoiceStore(uuid, dest) {
+        // Reactive: rebuild the object so Alpine detects the change
+        this.invoiceStore = { ...this.invoiceStore, [uuid]: dest };
     },
 
     bulkSetLabelDest(dest) {
