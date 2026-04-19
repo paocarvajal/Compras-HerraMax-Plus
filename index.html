@@ -653,16 +653,23 @@ Alpine.data('app',()=>({
             </head>
             <body onload="window.print();">
                 <div class="labels-container">
-                    ${this.filteredItems.map(item => `
-                        <div class="label">
-                            <span class="suffix">${store}</span>
-                            <div>
-                                <span class="sku">${item.SKU || '---'}</span>
-                                <div class="desc">${item.Producto}</div>
-                            </div>
-                            <div class="cat">${item.Categoria}</div>
-                        </div>
-                    `).join('')}
+                    ${this.filteredItems.map(item => {
+                        const count = Math.max(1, Math.floor(parseFloat(item.Cantidad) || 1));
+                        let labels = '';
+                        for(let i=0; i<count; i++) {
+                            labels += `
+                                <div class="label">
+                                    <span class="suffix">${store}</span>
+                                    <div>
+                                        <span class="sku">${item.SKU || '---'}</span>
+                                        <div class="desc">${item.Producto}</div>
+                                    </div>
+                                    <div class="cat">${item.Categoria}</div>
+                                </div>
+                            `;
+                        }
+                        return labels;
+                    }).join('')}
                 </div>
             </body>
             </html>
