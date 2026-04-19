@@ -134,7 +134,12 @@
                     <span>Mostrando <b class="text-slate-300" x-text="filteredItems.length"></b> registros</span>
                     <span>Subtotal: <b class="text-blue-300" x-text="'$'+filteredSubtotal.toLocaleString('en-US',{minimumFractionDigits:2})"></b></span>
                 </div>
-                <div>
+                <div class="flex items-center gap-2">
+                    <template x-if="selU.length > 0">
+                        <button @click="delInvoices()" class="px-3 py-1 bg-red-900/50 hover:bg-red-900 text-red-200 border border-red-700 rounded transition-all">
+                            🗑️ Borrar <span x-text="selU.length"></span> Facturas
+                        </button>
+                    </template>
                     <button @click="showHistory = !showHistory" class="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-600 rounded">
                         <span x-text="showHistory ? '👁️ Ocultar Histórico' : '📂 Cargar Histórico Nube'"></span>
                     </button>
@@ -152,6 +157,8 @@
                     <table class="w-full text-left text-xs">
                         <thead class="sticky top-0 bg-slate-800/95 backdrop-blur text-slate-300 z-10">
                             <tr>
+                                <th class="px-3 py-3 w-10"></th>
+                                <th class="px-3 py-3 text-slate-400 font-normal">Factura (5)</th>
                                 <th class="px-3 py-3 rth sort-th" @click="sBy('SKU')">SKU <span x-show="sc==='SKU'" x-text="sa?'🔼':'🔽'"></span></th>
                                 <th class="px-3 py-3 rth sort-th" @click="sBy('Producto')">Descripción <span x-show="sc==='Producto'" x-text="sa?'🔼':'🔽'"></span></th>
                                 <th class="px-3 py-3 rth sort-th" @click="sBy('TipoOdoo')">Tipo <span x-show="sc==='TipoOdoo'" x-text="sa?'🔼':'🔽'"></span></th>
@@ -171,7 +178,7 @@
                                     :class="row._grp ? 'grp-hdr' : (sessUUIDs.includes(row.UUID_Factura)?'bg-blue-950/20 hover:bg-slate-700/25 transition-colors':'hover:bg-slate-700/25 transition-colors')"
                                     @click="row._grp && toggleGroup(row._grpKey)">
                                     <!-- Group header cell -->
-                                    <td x-show="row._grp" colspan="9">
+                                    <td x-show="row._grp" colspan="11">
                                         <span x-text="collapsedGroups[row._grpKey]?'▶':'▼'"></span>
                                         <span class="ml-2" x-text="row._grpLabel"></span>
                                         <span class="ml-2 font-normal text-slate-400">(<span x-text="row._grpCount"></span> artículos &middot; $<span x-text="row._grpSum.toLocaleString('en-US',{minimumFractionDigits:2})"></span>)</span>
@@ -185,6 +192,12 @@
                                             </select>
                                         </div>
                                     </td>
+                                    <!-- Selector -->
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-center">
+                                        <input type="checkbox" :value="row.UUID_Factura" x-model="selU" class="accent-red-500 w-4 h-4 cursor-pointer">
+                                    </td>
+                                    <!-- UUID 5 -->
+                                    <td x-show="!row._grp" class="px-3 py-1.5 text-[10px] font-mono text-slate-500" x-text="(row.UUID_Factura||'').slice(-5)"></td>
                                     <!-- Data cells -->
                                     <td x-show="!row._grp" class="px-3 py-1.5 font-mono font-bold text-accent" x-text="row.SKU||'-'"></td>
                                     <td x-show="!row._grp" class="px-3 py-1.5" :title="row.Producto">
@@ -331,7 +344,7 @@
 document.addEventListener('alpine:init',()=>{
 Alpine.data('app',()=>({
     // Auth & data
-    user:null, items:[], sessUUIDs:[], showHistory:false,
+    user:null, items:[], sessUUIDs:[], showHistory:false, selU:[],
     // Processing filters
     q:'', fCat:'', fProv:'',
     grpBy:'Ninguno', collapsedGroups:{},
@@ -482,6 +495,15 @@ Alpine.data('app',()=>({
             alert('¡Base de datos en la nube formateada a $0!');
             location.reload();
         } catch(e) { console.error(e); alert('Error borrando bóveda.'); }
+    },
+
+    delInvoices() {
+        if(!this.selU.length) return;
+        if(!confirm(`¿Segura que quieres borrar estas ${this.selU.length} facturas (incluyendo todos sus artículos)?`)) return;
+        this.items = this.items.filter(i => !this.selU.includes(i.UUID_Factura));
+        this.sessUUIDs = this.sessUUIDs.filter(u => !this.selU.includes(u));
+        this.selU = [];
+        this.saveLocal();
     },
 
     applyBulkType(groupValue, tipo) {
