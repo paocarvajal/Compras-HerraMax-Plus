@@ -394,10 +394,11 @@
                 </div>
                 
                 <div class="flex items-center gap-4 bg-slate-900/50 p-2 rounded-xl border border-slate-700">
-                    <span class="text-xs font-bold text-slate-500 uppercase">Tienda Destino:</span>
+                    <span class="text-xs font-bold text-slate-500 uppercase">Filtrar por:</span>
                     <div class="flex gap-1">
                         <button @click="labelStore='Ele45'" :class="labelStore==='Ele45'?'bg-blue-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Electrica 45</button>
                         <button @click="labelStore='Fer41'" :class="labelStore==='Fer41'?'bg-orange-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Ferreteria 41</button>
+                        <button @click="labelStore='Todo'" :class="labelStore==='Todo'?'bg-slate-600 text-white':'bg-slate-800 text-slate-500'" class="px-4 py-1.5 rounded-lg text-xs font-bold transition-all">Ver Todo</button>
                     </div>
                 </div>
 
@@ -420,7 +421,7 @@
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-slate-700/30">
-                        <template x-for="item in filteredItems" :key="item.FB_ID">
+                        <template x-for="item in filteredItems.filter(i => labelStore==='Todo' || i._dest===labelStore)" :key="item.FB_ID">
                             <tr class="hover:bg-slate-700/20 transition-colors" :class="!item._print ? 'opacity-50' : ''">
                                 <td class="px-3 py-1.5 text-center">
                                     <input type="checkbox" x-model="item._print" class="accent-green-500">
@@ -428,9 +429,15 @@
                                 <td class="px-3 py-1.5 font-bold text-accent" x-text="item.SKU"></td>
                                 <td class="px-3 py-1.5 text-slate-300" x-text="item.Producto"></td>
                                 <td class="px-3 py-1.5">
-                                    <select x-model="item.Categoria" @change="dirty(item)" class="bg-slate-900 border border-slate-700 rounded px-1 text-[10px] w-full text-slate-400">
-                                        <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
-                                    </select>
+                                    <div class="flex flex-col gap-1">
+                                        <select x-model="item.Categoria" @change="dirty(item)" class="bg-slate-900 border border-slate-700 rounded px-1 text-[10px] w-full text-slate-400">
+                                            <template x-for="c in odooCats" :key="c"><option :value="c" x-text="c"></option></template>
+                                        </select>
+                                        <div class="flex gap-1">
+                                            <button @click="item._dest='Ele45'; dirty(item)" :class="item._dest==='Ele45'?'text-blue-400 font-bold border-blue-400':'text-slate-600 border-slate-700'" class="text-[8px] px-1 border rounded">Ele45</button>
+                                            <button @click="item._dest='Fer41'; dirty(item)" :class="item._dest==='Fer41'?'text-orange-400 font-bold border-orange-400':'text-slate-600 border-slate-700'" class="text-[8px] px-1 border rounded">Fer41</button>
+                                        </div>
+                                    </div>
                                 </td>
                                 <td class="px-3 py-1.5 text-center font-mono text-slate-500" x-text="item.Cantidad"></td>
                                 <td class="px-3 py-1.5 text-center">
@@ -444,13 +451,13 @@
 
             <!-- Labels Preview -->
             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                <template x-for="item in filteredItems.filter(i => i._print && i._labelQty > 0)" :key="item.FB_ID">
+                <template x-for="item in filteredItems.filter(i => (labelStore==='Todo' || i._dest===labelStore) && i._print && i._labelQty > 0)" :key="item.FB_ID">
                     <div class="bg-white text-black p-3 rounded shadow-sm flex flex-col justify-between border-2 border-slate-200 aspect-[5/3] overflow-hidden relative">
                          <div class="absolute top-0 left-0 bg-green-600 text-[8px] text-white px-1 font-bold" x-text="'x'+item._labelQty"></div>
                         <div>
                             <div class="flex justify-between items-start mb-1">
                                 <span class="text-[14px] font-black leading-none" x-text="item.SKU || '---'"></span>
-                                <span class="text-[9px] bg-slate-100 px-1 rounded font-bold border border-slate-300" x-text="labelStore"></span>
+                                <span class="text-[9px] bg-slate-100 px-1 rounded font-bold border border-slate-300" x-text="item._dest"></span>
                             </div>
                             <div class="text-[10px] uppercase font-bold leading-tight mb-1" x-text="item.Producto"></div>
                         </div>
@@ -697,7 +704,7 @@ Alpine.data('app',()=>({
                         for(let i=0; i<count; i++) {
                             labels += `
                                 <div class="label">
-                                    <span class="suffix">${store}</span>
+                                    <span class="suffix">${item._dest}</span>
                                     <div>
                                         <span class="sku">${item.SKU || '---'}</span>
                                         <div class="desc">${item.Producto}</div>
@@ -806,16 +813,27 @@ Alpine.data('app',()=>({
         const fecha=comp?.getAttribute('Fecha')?.substring(0,10)||'Desconocida';
         let cs=[...xml.getElementsByTagName('cfdi:Concepto')];
         if(!cs.length) cs=[...xml.getElementsByTagName('Concepto')];
+        const receptorN=xml.getElementsByTagName('cfdi:Receptor')[0]||xml.getElementsByTagName('Receptor')[0];
+        const receptorRFC=receptorN?.getAttribute('Rfc')||'';
+        const receptorName=receptorN?.getAttribute('Nombre')||'';
+        
         const rows=cs.map((c,lineIdx)=>{
             const sku=c.getAttribute('NoIdentificacion')||'';
             const prod=c.getAttribute('Descripcion');
             const cant=parseFloat(c.getAttribute('Cantidad'));
             const cat=this.getCat(sku)||this.getCatByName(prod)||this.items.find(i=>(i.SKU===sku&&sku)||(i.Producto===prod))?.Categoria||'Sin Asignar';
+            
+            // Auto-detect store based on Receptor RFC if known
+            let destino = 'Ele45'; // Default or detection logic
+            // (Si Paola usa el mismo RFC para ambos, igual necesitamos que ella lo asigne, 
+            // pero podemos intentar por el nombre si cambia ligeramente o por el Domicilio)
+            
             return{Fecha:fecha, Fecha_Timbrado:fechaTimbrado, Proveedor:emisor,SKU:sku,Producto:prod,
-                Cantidad:cant, _labelQty:cant, _print:true,
+                Cantidad:cant, _labelQty:cant, _print:true, _dest: destino,
                 Costo_Unitario:parseFloat(c.getAttribute('ValorUnitario')),
                 Subtotal_Total:parseFloat(c.getAttribute('Importe')),
                 UUID_Factura:uuid,Categoria:cat,TipoOdoo:'Almacenable',ModifiedBy:this.user.email,
+                Receptor_RFC:receptorRFC, Receptor_Name:receptorName,
                 FB_ID:(uuid+'_'+lineIdx+'_'+prod.replace(/[^a-zA-Z0-9]/g,'')).substring(0,60)};
         });
         this.sessUUIDs.push(uuid);
